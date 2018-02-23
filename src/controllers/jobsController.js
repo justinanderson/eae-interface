@@ -43,38 +43,37 @@ JobsController.prototype.createNewJob = function(req, res){
         return;
     }
     try {
-        // Check the validity of the JOB
+        // Check that the query is well formed
         let jobRequest = JSON.parse(req.body.job);
-        let requiredJobFields = ['type', 'main', 'params', 'input'];
-        let terminateCreation = false;
+        let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'parameters' , 'aggregationLevel', 'aggregationValue', 'sample'];
+
         requiredJobFields.forEach(function(key){
-            if(jobRequest[key] === null || jobRequest[key] === undefined){
+            if(jobRequest[key] === null || jobRequest[key] === undefined) {
                 res.status(401);
-                res.json(ErrorHelper('Job request is not well formed. Missing ' + jobRequest[key]));
-                terminateCreation = true;
-            }
-            if(key === 'type'){
-                let listOfSupportedComputations = [Constants.EAE_COMPUTE_TYPE_PYTHON2, Constants.EAE_COMPUTE_TYPE_R,
-                    Constants.EAE_COMPUTE_TYPE_TENSORFLOW, Constants.EAE_COMPUTE_TYPE_SPARK];
-                if(!(listOfSupportedComputations.includes(jobRequest[key]))) {
-                    res.status(405);
-                    res.json(ErrorHelper('The requested compute type is currently not supported. The list of supported computations: ' +
-                        Constants.EAE_COMPUTE_TYPE_PYTHON2 + ', ' + Constants.EAE_COMPUTE_TYPE_SPARK + ', ' + Constants.EAE_COMPUTE_TYPE_R + ', ' +
-                        Constants.EAE_COMPUTE_TYPE_TENSORFLOW));
-                    terminateCreation = true;
-                }
+                res.json(ErrorHelper('Job request is not well formed. Missing ' + key));
+                return;
             }
         });
-        // we cannot stop the foreach without throwing an error so it is a bad workaround
-        if(terminateCreation) return;
+
+        // TODO: Get list of supported algos from algo bank
+        let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
+
+        // Check that specified algorithm is one of the supported ones
+        if(!(listOfSupportedAlgos.includes(jobRequest['algorithm']))) {
+            res.status(405);
+            res.json(ErrorHelper('The requested algo type is currently not supported.' +
+                ' The list of supported computations: ' + listOfSupportedAlgos.toString()));
+
+            return;
+        }
 
         // Prevent the model from being updated
         let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
         let newJob = Object.assign({}, eaeJobModel, jobRequest, {_id: new ObjectID()});
         // In opal there is no data transfer step so we move directly to queued
-        newJob.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
         newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
         newJob.requester = opalUsername;
+
         let filter = {
             username: opalUsername,
             token: userToken
