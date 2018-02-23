@@ -2,6 +2,11 @@ const { ErrorHelper, Constants, DataModels } = require('eae-utils');
 const { interface_constants } = require('../core/models.js');
 const ObjectID = require('mongodb').ObjectID;
 const JobsManagement = require('../core/jobsManagement.js');
+const request = require('request');
+
+// TODO: Change cache url to come from config (It's going to be a docker)
+let cacheUrl = '127.0.0.1:8080';
+
 
 /**
  * @fn JobsController
@@ -87,7 +92,31 @@ JobsController.prototype.createNewJob = function(req, res){
                 _this._accessLogger.logAccess(req);
                 return;
             }
-            //TODO: replace create manifest by sending the request to cache if not foudn to scheduler
+
+            request(
+                {
+                    method: 'POST',
+                    baseUrl: cacheUrl,
+                    uri: '/query',
+                    json: true,
+                    body: req.body
+                },
+                function(error, _, body) {
+                    if (error) {
+                        res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                    }
+                    if (body.result) {
+                        // The query has been found, return the result immediately
+                        res.status(200);
+                        res.json({status: 'OK', result: body.result});
+                    }
+                    else {
+                        // The query has not been found, forward to scheduler
+                        // TODO: Send request to scheduler
+                    }
+                }
+            );
+
             _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
                 res.status(200);
                 res.json({status: 'OK', jobID: newJob._id.toString()});
