@@ -98,9 +98,9 @@ test('Get Job No jobID', function(done) {
     );
 });
 
-test('Create a Job with a nonsupported compute type', function(done) {
+test('Create a Job with a nonsupported algo type', function(done) {
     expect.assertions(4);
-    let job = JSON.stringify({"type": "python", "main": "hello.py", "params": [], "input": ["input1.txt", "input2.txt"]});
+    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "unsupported", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
     request(
         {
             method: 'POST',
@@ -120,9 +120,11 @@ test('Create a Job with a nonsupported compute type', function(done) {
             expect(response).toBeDefined();
             expect(response.statusCode).toEqual(405);
             expect(body).toBeDefined();
-            expect(body).toEqual({error:'The requested compute type is currently not supported. The list of supported computations: ' +
-                            eaeutils.Constants.EAE_COMPUTE_TYPE_PYTHON2 + ', ' + eaeutils.Constants.EAE_COMPUTE_TYPE_SPARK + ', ' +
-                            eaeutils.Constants.EAE_COMPUTE_TYPE_R + ', ' + eaeutils.Constants.EAE_COMPUTE_TYPE_TENSORFLOW});
+
+            let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
+
+            expect(body.error).toEqual('The requested algo type is currently not supported.' +
+                ' The list of supported computations: ' + listOfSupportedAlgos.toString());
             done();
         }
     );
@@ -130,8 +132,8 @@ test('Create a Job with a nonsupported compute type', function(done) {
 
 
 test('Create a Job and subsequently get it', function(done) {
-    expect.assertions(14);
-    let job = JSON.stringify({"type": eaeutils.Constants.EAE_COMPUTE_TYPE_PYTHON2, "main": "hello.py", "params": [], "input": ["input1.txt", "input2.txt"]});
+    expect.assertions(12);
+    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "density", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
     request(
         {
             method: 'POST',
@@ -171,12 +173,10 @@ test('Create a Job and subsequently get it', function(done) {
                     expect(response).toBeDefined();
                     expect(response.statusCode).toEqual(200);
                     expect(body).toBeDefined();
-                    expect(body.type).toEqual(eaeutils.Constants.EAE_COMPUTE_TYPE_PYTHON2);
+                    expect(body.algorithm).toEqual("density");
                     expect(body.requester).toEqual(adminUsername);
-                    expect(body.main).toEqual('hello.py');
                     expect(body.statusLock).toEqual(false);
                     expect(body.exitCode).toEqual(-1);
-                    expect(body.input).toEqual([ 'input1.txt', 'input2.txt' ]);
                     done();
                 });
         }
@@ -185,7 +185,7 @@ test('Create a Job and subsequently get it', function(done) {
 
 test('Create a Job and subsequently cancel it', function(done) {
     expect.assertions(10);
-    let job = JSON.stringify({"type": eaeutils.Constants.EAE_COMPUTE_TYPE_PYTHON2, "main": "hello.py", "params": [], "input": ["input1.txt", "input2.txt"]});
+    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "density", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
     request(
         {
             method: 'POST',
@@ -227,7 +227,7 @@ test('Create a Job and subsequently cancel it', function(done) {
                     expect(response.statusCode).toEqual(200);
                     expect(body).toBeDefined();
                     expect(body.status).toEqual('Job ' + jobID + ' has been successfully cancelled.');
-                    expect(body.cancelledJob.status).toEqual([eaeutils.Constants.EAE_JOB_STATUS_CANCELLED, eaeutils.Constants.EAE_JOB_STATUS_QUEUED, eaeutils.Constants.EAE_JOB_STATUS_TRANSFERRING_DATA, eaeutils.Constants.EAE_JOB_STATUS_CREATED]);
+                    expect(body.cancelledJob.status).toEqual([eaeutils.Constants.EAE_JOB_STATUS_CANCELLED, eaeutils.Constants.EAE_JOB_STATUS_QUEUED, eaeutils.Constants.EAE_JOB_STATUS_CREATED]);
                     done();
                 });
         }
