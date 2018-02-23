@@ -22,3 +22,4 @@ COPY ./test/*.js /usr/app/test/
 COPY ./config/opal.interface.test.config.js /usr/app/config/opal.interface.test.config.js
 
 EXPOSE 80
+CMD [ "npm", "test"]
