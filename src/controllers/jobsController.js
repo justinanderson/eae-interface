@@ -46,15 +46,15 @@ JobsController.prototype.createNewJob = function(req, res){
         return;
     }
     try {
-        // Check that the query is well formed
         let jobRequest = JSON.parse(req.body.job);
+
+        // Check that the query is well formed
         let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'params' , 'aggregationLevel', 'aggregationValue', 'sample'];
 
         requiredJobFields.forEach(function(key){
             if(jobRequest[key] === null || jobRequest[key] === undefined) {
-                res.status(401);
+                res.status(400);
                 res.json(ErrorHelper('Job request is not well formed. Missing ' + key));
-                return;
             }
         });
 
@@ -63,7 +63,7 @@ JobsController.prototype.createNewJob = function(req, res){
 
         // Check that specified algorithm is one of the supported ones
         if(!(listOfSupportedAlgos.includes(jobRequest['algorithm']))) {
-            res.status(405);
+            res.status(400);
             res.json(ErrorHelper('The requested algo type is currently not supported.' +
                 ' The list of supported computations: ' + listOfSupportedAlgos.toString()));
 
