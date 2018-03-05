@@ -4,20 +4,18 @@ const ObjectID = require('mongodb').ObjectID;
 const JobsManagement = require('../core/jobsManagement.js');
 const request = require('request');
 
-// TODO: Change cache url to come from config (It's going to be a docker)
-let cacheUrl = '127.0.0.1:8080';
-
-
 /**
  * @fn JobsController
  * @desc Controller to manage the jobs service
  * @param jobsCollection
  * @param usersCollection
  * @param accessLogger
+ * @param config
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, accessLogger) {
+function JobsController(jobsCollection, usersCollection, accessLogger, config) {
     let _this = this;
+    _this.config = config;
     _this._jobsCollection = jobsCollection;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
@@ -50,7 +48,7 @@ JobsController.prototype.createNewJob = function(req, res){
     try {
         // Check that the query is well formed
         let jobRequest = JSON.parse(req.body.job);
-        let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'parameters' , 'aggregationLevel', 'aggregationValue', 'sample'];
+        let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'params' , 'aggregationLevel', 'aggregationValue', 'sample'];
 
         requiredJobFields.forEach(function(key){
             if(jobRequest[key] === null || jobRequest[key] === undefined) {
@@ -96,12 +94,12 @@ JobsController.prototype.createNewJob = function(req, res){
             request(
                 {
                     method: 'POST',
-                    baseUrl: cacheUrl,
+                    baseUrl: _this.config.cacheURL,
                     uri: '/query',
                     json: true,
                     body: req.body
                 },
-                function(error, _, body) {
+                function(error, _unused__, body) {
                     if (error) {
                         res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
                     }
