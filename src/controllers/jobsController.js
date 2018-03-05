@@ -51,12 +51,18 @@ JobsController.prototype.createNewJob = function(req, res){
         // Check that the query is well formed
         let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'params' , 'aggregationLevel', 'aggregationValue', 'sample'];
 
+        let malformedFields = false;
         requiredJobFields.forEach(function(key){
             if(jobRequest[key] === null || jobRequest[key] === undefined) {
+                malformedFields = true;
                 res.status(400);
                 res.json(ErrorHelper('Job request is not well formed. Missing ' + key));
             }
         });
+
+        if (malformedFields) {
+            return;
+        }
 
         // TODO: Get list of supported algos from algo bank
         let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
