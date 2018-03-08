@@ -10,7 +10,7 @@ services:
         ports:
             - 27017:27017
 
-    algoService:
+    algoservice:
         image: aoehmich/opal-algoservice:latest
         ports:
             - 3000:3000
