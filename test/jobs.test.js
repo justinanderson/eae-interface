@@ -100,7 +100,15 @@ test('Get Job No jobID', function(done) {
 
 test('Create a Job with a nonsupported algo type', function(done) {
     expect.assertions(4);
-    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "unsupported", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
+    let job = JSON.stringify({
+        'startDate': new Date(0),
+        'endDate': new Date(1),
+        'algorithm': 'unsupported',
+        'params': {},
+        'aggregationLevel': 'region',
+        'aggregationValue': 'Dakar',
+        'sample': 0.1
+    });
     request(
         {
             method: 'POST',
@@ -118,7 +126,7 @@ test('Create a Job with a nonsupported algo type', function(done) {
                 done.fail(error.toString());
             }
             expect(response).toBeDefined();
-            expect(response.statusCode).toEqual(405);
+            expect(response.statusCode).toEqual(400);
             expect(body).toBeDefined();
 
             let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
@@ -133,7 +141,15 @@ test('Create a Job with a nonsupported algo type', function(done) {
 
 test('Create a Job and subsequently get it', function(done) {
     expect.assertions(12);
-    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "density", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
+    let job = JSON.stringify({
+        'startDate': new Date(0),
+        'endDate': new Date(1),
+        'algorithm': 'density',
+        'params': {},
+        'aggregationLevel': 'region',
+        'aggregationValue': 'Dakar',
+        'sample': 0.1
+    });
     request(
         {
             method: 'POST',
@@ -173,7 +189,7 @@ test('Create a Job and subsequently get it', function(done) {
                     expect(response).toBeDefined();
                     expect(response.statusCode).toEqual(200);
                     expect(body).toBeDefined();
-                    expect(body.algorithm).toEqual("density");
+                    expect(body.algorithm).toEqual('density');
                     expect(body.requester).toEqual(adminUsername);
                     expect(body.statusLock).toEqual(false);
                     expect(body.exitCode).toEqual(-1);
@@ -185,7 +201,15 @@ test('Create a Job and subsequently get it', function(done) {
 
 test('Create a Job and subsequently cancel it', function(done) {
     expect.assertions(10);
-    let job = JSON.stringify({"startDate": "",  "endDate": "", "algorithm": "density", "parameters": {}, "aggregationLevel": "region", "aggregationValue": "Dakar", "sample": 0.1});
+    let job = JSON.stringify({
+        'startDate': new Date(0),
+        'endDate': new Date(1),
+        'algorithm': 'density',
+        'params': {},
+        'aggregationLevel': 'region',
+        'aggregationValue': 'Dakar',
+        'sample': 0.1
+    });
     request(
         {
             method: 'POST',
