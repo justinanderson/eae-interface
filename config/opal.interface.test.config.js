@@ -1,8 +1,8 @@
 
 module.exports = {
-    mongoURL: 'mongodb://146.169.32.148:27017/eaeservices',
-    port: 800,
+    mongoURL: 'mongodb://mongodb/eae',
+    port: 80,
     enableCors: true,
-    algoServiceURL: 'http://127.0.0.1:3002',
+    algoServiceURL: 'http://algoservice:3001',
     algorithmsDirectory: 'algorithms'
 };

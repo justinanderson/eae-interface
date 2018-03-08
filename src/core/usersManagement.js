@@ -8,12 +8,14 @@ const { interface_constants } = require('../core/models.js');
  * @desc service to manage the creation, validity and update of the OPAL users.
  * @params usersCollection Collection containing all the platform users
  * @params algorithmHelper Helper to interact with the algo service
+ * @params interfaceUtils Interface utils
  * @constructor
  */
-function UsersManagement(usersCollection, algorithmHelper) {
+function UsersManagement(usersCollection, algorithmHelper, interfaceUtils) {
     let _this = this;
     _this._usersCollection = usersCollection;
     _this._algoHelper = algorithmHelper;
+    _this.utils = interfaceUtils;
 
     // Bind member functions
     this.validateUserAndInsert = UsersManagement.prototype.validateUserAndInsert.bind(this);
