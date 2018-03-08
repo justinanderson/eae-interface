@@ -12,7 +12,7 @@ services:
 
     algoService:
         image: aoehmich/opal-algoservice:latest
-         ports:
+        ports:
             - 3000:3000
 
     tests:

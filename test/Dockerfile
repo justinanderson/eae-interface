@@ -20,5 +20,6 @@ COPY ./src /usr/app/src
 COPY ./.eslintrc /usr/app/.eslintrc
 COPY ./test/*.js /usr/app/test/
 COPY ./config/opal.interface.test.config.js /usr/app/config/opal.interface.test.config.js
+COPY ./algorithms /usr/app/algorithms
 
 EXPOSE 80
