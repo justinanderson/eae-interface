@@ -96,7 +96,6 @@ JobsController.prototype.createNewJob = function(req, res){
                 _this._accessLogger.logAccess(req);
                 return;
             }
-
             request(
                 {
                     method: 'POST',
@@ -109,25 +108,31 @@ JobsController.prototype.createNewJob = function(req, res){
                     if (error) {
                         res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
                     }
-                    if (body.result) {
-                        // The query has been found, return the result immediately
+                    else if (body.result) {
+                        // The query has been found with a result, return the result immediately
                         res.status(200);
+                        //TODO: choose format of answer to user
                         res.json({status: 'OK', result: body.result});
                     }
+                    else if (body.waiting) {
+                        // The query has already been submitted but the result is not ready yet, tell the user to wait
+                        res.status(200);
+                        //TODO: choose format of answer to user
+                        res.json({status: 'Waiting'});
+                    }
                     else {
-                        // The query has not been found, forward to scheduler
-                        // TODO: Send request to scheduler
+                        // The query has not been found, insert job in mongo so scheduler can execute it
+                        _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                            res.status(200);
+                            //TODO: choose format of answer to user
+                            res.json({status: 'OK', jobID: newJob._id.toString()});
+                        },function(error){
+                            res.status(500);
+                            res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                        });
                     }
                 }
             );
-
-            _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                res.status(200);
-                res.json({status: 'OK', jobID: newJob._id.toString()});
-            },function(error){
-                res.status(500);
-                res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
-            });
         },function(error) {
             res.status(500);
             res.json(ErrorHelper('Internal Mongo Error', error));
