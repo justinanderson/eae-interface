@@ -12,8 +12,14 @@ services:
 
     algoservice:
         image: aoehmich/opal-algoservice:latest
+        depends_on:
+            - mongodb
+        links:
+            - mongodb
         ports:
             - 3000:3000
+        volumes:
+            - ./opal.algoservice.config.js:/usr/app/config/opal.algoservice.config.js
 
     tests:
         build:
