@@ -32,7 +32,7 @@ ClusterController.prototype.getServicesStatus = function(req, res){
 
     if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
     try {
