@@ -39,45 +39,15 @@ JobsController.prototype.createNewJob = function(req, res){
 
     if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
 
     try {
         // Check the validity of the JOB
         let jobRequest = JSON.parse(req.body.job);
-        let requiredJobFields = _this._jobsManagement.checkFields(jobRequest).then(function(check) {
-            let terminateCreation = false;
-            requiredJobFields.forEach(function(key){
-                if(requiredJobFields[key] === null){
-                    res.status(401);
-                    res.json(ErrorHelper('Job request is not well formed. Missing ' + requiredJobFields[key]));
-                    terminateCreation = true;
-                }
-                if(key === 'type'){
-                    let listOfSupportedComputations = [Constants.EAE_COMPUTE_TYPE_PYTHON2, Constants.EAE_COMPUTE_TYPE_R,
-                        Constants.EAE_COMPUTE_TYPE_TENSORFLOW, Constants.EAE_COMPUTE_TYPE_SPARK];
-                    if(!(listOfSupportedComputations.includes(jobRequest[key]))) {
-                        res.status(405);
-                        res.json(ErrorHelper('The requested compute type is currently not supported. The list of supported computations: ' +
-                            Constants.EAE_COMPUTE_TYPE_PYTHON2 + ', ' + Constants.EAE_COMPUTE_TYPE_SPARK + ', ' + Constants.EAE_COMPUTE_TYPE_R + ', ' +
-                            Constants.EAE_COMPUTE_TYPE_TENSORFLOW));
-                        terminateCreation = true;
-                    }
-                }
-            });
-            // we cannot stop the foreach without throwing an error so it is a bad workaround
-            if(terminateCreation) return;
-
-            // Prevent the model from being updated
-            let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
-            let newJob = Object.assign({}, eaeJobModel, jobRequest, {_id: new ObjectID()});
-            // In opal there is no data transfer step so we move directly to queued
-            newJob.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
-            newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
-            newJob.requester = opalUsername;
+        _this._jobsManagement.checkFields(jobRequest).then(function(_unused__check) {
             let filter = {
-                username: opalUsername,
                 token: userToken
             };
 
@@ -89,20 +59,42 @@ JobsController.prototype.createNewJob = function(req, res){
                     _this._accessLogger.logAccess(req);
                     return;
                 }
-                //TODO: replace create manifest by sending the request to cache if not foudn to scheduler
-                _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                    res.status(200);
-                    res.json({status: 'OK', jobID: newJob._id.toString()});
-                },function(error){
-                    res.status(500);
-                    res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                // Build the job to be inserted for the scheduler
+                let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
+
+                // We need to reformat the OPAL job request to feat the eAE's one
+                let opalRequest = {params: jobRequest, requester: user.username};
+
+                // We merge all those parameters to make the final job
+                let newJob = Object.assign({}, eaeJobModel, opalRequest, {_id: new ObjectID(), type: Constants.EAE_JOB_TYPE_PYTHON2});
+                // In opal there is no data transfer step so we move directly to queued
+                newJob.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
+                newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
+                // Check users rights to execute the request
+                _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
+                    //TODO: --EMANUELE-- request to cache if not found then schedule job
+                    _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                        _this._jobsCollection.count().then(function(count) {
+                            res.status(200);
+                            res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
+                        },function(error){
+                            res.status(500);
+                            res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                        });
+                    },function(error){
+                        res.status(500);
+                        res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                    });
+                }, function(error){
+                    res.status(401);
+                    res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
                 });
             },function(error) {
                 res.status(500);
                 res.json(ErrorHelper('Internal Mongo Error', error));
             });
-        },function(error){
-            res.status(500);
+        }, function(error){
+            res.status(401);
             res.json(ErrorHelper('The field check failed.', error));
         });
     }
