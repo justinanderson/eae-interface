@@ -10,13 +10,21 @@ services:
         ports:
             - 27017:27017
 
+    algoService:
+        image: aoehmich/opal-algoservice:latest
+         ports:
+            - 3000:3000
+
     tests:
         build:
             context: ..
             dockerfile: ./test/Dockerfile
         depends_on:
             - mongodb
+            - algoService
         links:
             - mongodb
+            - algoService
         ports:
             - 80:80
+

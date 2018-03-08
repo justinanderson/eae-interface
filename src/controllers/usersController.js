@@ -16,7 +16,7 @@ function UsersController(usersCollection, accessLogger, algorithmHelper) {
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
     _this.utils = new InterfaceUtils();
-    _this.usersManagement = new UsersManagement(usersCollection, algorithmHelper);
+    _this.usersManagement = new UsersManagement(usersCollection, algorithmHelper, _this.utils);
 
     // Bind member functions
     _this.getUser = UsersController.prototype.getUser.bind(this);
@@ -25,6 +25,7 @@ function UsersController(usersCollection, accessLogger, algorithmHelper) {
     _this.updateUser = UsersController.prototype.updateUser.bind(this);
     _this.deleteUser = UsersController.prototype.deleteUser.bind(this);
     _this.getAllUsers = UsersController.prototype.getAllUsers.bind(this);
+    _this.resetUserPassword = UsersController.prototype.resetUserPassword.bind(this);
 }
 
 

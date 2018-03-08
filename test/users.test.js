@@ -11,7 +11,11 @@ beforeAll(function() {
     return new Promise(function (resolve, reject) {
         ts.run().then(function() {
             ts.addAdminUser(adminUsername, adminPassword).then(function(){
-                resolve(true);
+                ts.addAlgorithm().then(function() {
+                    resolve(true);
+                },function(algoError){
+                   reject(algoError);
+                });
             },function(insertError){
                 reject(insertError);
             });
@@ -158,8 +162,8 @@ test('Get All standard Users (when there is none)', function(done) {
 });
 
 test('Create a new user', function(done) {
-    expect.assertions(3);
-    let newUser = JSON.stringify({"username": "NotLegit"});
+    expect.assertions(6);
+    let newUser = JSON.stringify({"username": "NotLegit", "authorizedAlgorithms": {"density":"cache_only"} , "defaultAccessLevel":"aggregation_level_2"});
     request(
         {
             method: 'POST',
@@ -167,7 +171,6 @@ test('Create a new user', function(done) {
             uri: '/user/create',
             json: true,
             body: {
-                opalUsername: adminUsername,
                 opalUserToken: adminPassword,
                 newUser: newUser
             }
@@ -179,9 +182,68 @@ test('Create a new user', function(done) {
             expect(response).toBeDefined();
             expect(response.statusCode).toEqual(200);
             expect(body).toBeDefined();
+            expect(body.token).toBeDefined();
+            expect(body.authorizedAlgorithms["density"]).toEqual("cache_only");
+            expect(body.defaultAccessLevel).toEqual("aggregation_level_2");
             done();
         });
 });
+
+test('Update newly created user\'s default access level', function(done) {
+    expect.assertions(6);
+    let userToBeUpdated = "NotLegit";
+    let userUpdate = JSON.stringify({ "authorizedAlgorithms": {"density":"aggregation_level_1"} , "defaultAccessLevel":"aggregation_level_1"});
+    request(
+        {
+            method: 'POST',
+            baseUrl: 'http://127.0.0.1:' + config.port,
+            uri: '/user/update',
+            json: true,
+            body: {
+                opalUserToken: adminPassword,
+                userUpdate: userUpdate,
+                userToBeUpdated: userToBeUpdated
+        }},
+        function(error, response, body) {
+            if (error) {
+                done.fail(error.toString());
+            }
+            expect(response).toBeDefined();
+            expect(response.statusCode).toEqual(200);
+            expect(body).toBeDefined();
+            expect(body.new.token).toBeDefined();
+            expect(body.new.authorizedAlgorithms["density"]).toEqual("aggregation_level_1");
+            expect(body.new.defaultAccessLevel).toEqual("aggregation_level_1");
+            done();
+        });
+});
+
+test('Reset user password', function(done) {
+    expect.assertions(4);
+    let userToBeUpdated = "NotLegit";
+    request(
+        {
+            method: 'POST',
+            baseUrl: 'http://127.0.0.1:' + config.port,
+            uri: '/user/resetPassword',
+            json: true,
+            body: {
+                opalUserToken: adminPassword,
+                userUpdate: userUpdate,
+                userToBeUpdated: userToBeUpdated
+            }},
+        function(error, response, body) {
+            if (error) {
+                done.fail(error.toString());
+            }
+            expect(response).toBeDefined();
+            expect(response.statusCode).toEqual(200);
+            expect(body).toBeDefined();
+            expect(body.newPassword).toBeDefined();
+            done();
+        });
+});
+
 
 test('Get All Users', function(done) {
     expect.assertions(4);
