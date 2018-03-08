@@ -10,6 +10,17 @@ services:
         ports:
             - 27017:27017
 
+    cache:
+        image: emalgorithm/opalcache:latest
+        depends_on:
+            - mongodb
+        links:
+            - mongodb
+        ports:
+            - 8080:8080
+        volumes:
+            - ./opal.cache.config.js:/usr/app/config/opal.cache.config.js
+
     tests:
         build:
             context: ..
