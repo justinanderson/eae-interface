@@ -21,10 +21,10 @@ services:
             dockerfile: ./test/Dockerfile
         depends_on:
             - mongodb
-            - algoService
+            - algoservice
         links:
             - mongodb
-            - algoService
+            - algoservice
         ports:
             - 80:80
 
