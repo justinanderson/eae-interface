@@ -229,7 +229,6 @@ test('Reset user password', function(done) {
             json: true,
             body: {
                 opalUserToken: adminPassword,
-                userUpdate: userUpdate,
                 userToBeUpdated: userToBeUpdated
             }},
         function(error, response, body) {
