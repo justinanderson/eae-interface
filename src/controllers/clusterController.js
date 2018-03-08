@@ -30,7 +30,7 @@ ClusterController.prototype.getServicesStatus = function(req, res){
     let _this = this;
     let userToken = req.body.opalUserToken;
 
-    if ( userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
         res.json(ErrorHelper('Missing username or token'));
         return;
