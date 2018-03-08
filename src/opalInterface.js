@@ -10,7 +10,8 @@ const JobsControllerModule = require('./controllers/jobsController.js');
 const UsersControllerModule = require('./controllers/usersController.js');
 const ClusterControllerModule = require('./controllers/clusterController.js');
 const AccessLogger = require('./core/accessLogger.js');
-const AlgoHelper = require('./core/algorithmsHelper');
+const AlgoHelper = require('./core/algorithmsHelper.js');
+const AuditController = require('./controllers/auditController.js');
 
 /**
  * @class OpalInterface
@@ -154,6 +155,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                           _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                           _this.accessLogger);
+    _this.auditController =  new AuditController(_this.accessLogger);
 
     // Retrieve a specific job - Check that user requesting is owner of the job or Admin
     _this.app.post('/job', _this.jobsController.getJob);
@@ -172,6 +174,11 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
 
     // Status of the services in the opal - Admin only
     _this.app.post('/servicesStatus', _this.clusterController.getServicesStatus);
+
+    // Get the logs for Audit
+    _this.app.get('/audit', _this.auditController.getPublicAudit)
+            .get('/audit/getAll', _this.auditController.getAllPublicAudit)
+            .get('audit/getIllegalAccesses', _this.auditController.getPrivateAudit);
 
     // Manage the users who have access to the platform - Admin only
     _this.app.post('/user/', _this.usersController.getUser)

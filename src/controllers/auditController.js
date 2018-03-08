@@ -12,6 +12,7 @@ function AuditController(accessLogger) {
 
     // Bind member functions
     this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
+    this.getAllPublicAudit = AuditController.prototype.getAllPublicAudit.bind(this);
     this.getPrivateAudit = AuditController.prototype.getPrivateAudit.bind(this);
     this.addToPublicAudit = AuditController.prototype.addToPublicAudit.bind(this);
 }
@@ -23,6 +24,16 @@ function AuditController(accessLogger) {
  * @param res Express.js response object
  */
 AuditController.prototype.getPublicAudit = function(req, res) {
+
+};
+
+/**
+ * @fn getAllPublicAudit
+ * @desc HTTP method GET handler to serve the public audit
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+AuditController.prototype.getAllPublicAudit = function(req, res) {
 
 };
 
