@@ -17,7 +17,7 @@ services:
         links:
             - mongodb
         ports:
-            - 3000:3000
+            - 3001:3001
         volumes:
             - ./opal.algoservice.config.js:/usr/app/config/opal.algoservice.config.js
 
