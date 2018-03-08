@@ -11,31 +11,31 @@ function AuditController(accessLogger) {
     this._accessLogger = accessLogger;
 
     // Bind member functions
-    this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
-    this.getAllPublicAudit = AuditController.prototype.getAllPublicAudit.bind(this);
+    // this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
+    // this.getAllPublicAudit = AuditController.prototype.getAllPublicAudit.bind(this);
     this.getPrivateAudit = AuditController.prototype.getPrivateAudit.bind(this);
     this.addToPublicAudit = AuditController.prototype.addToPublicAudit.bind(this);
 }
 
-/**
- * @fn getPublicAudit
- * @desc HTTP method GET handler to serve the public audit
- * @param req Express.js request object
- * @param res Express.js response object
- */
-AuditController.prototype.getPublicAudit = function(req, res) {
-
-};
-
-/**
- * @fn getAllPublicAudit
- * @desc HTTP method GET handler to serve the public audit
- * @param req Express.js request object
- * @param res Express.js response object
- */
-AuditController.prototype.getAllPublicAudit = function(req, res) {
-
-};
+// /**
+//  * @fn getPublicAudit
+//  * @desc HTTP method GET handler to serve the public audit
+//  * @param req Express.js request object
+//  * @param res Express.js response object
+//  */
+// AuditController.prototype.getPublicAudit = function(req, res) {
+//
+// };
+//
+// /**
+//  * @fn getAllPublicAudit
+//  * @desc HTTP method GET handler to serve the public audit
+//  * @param req Express.js request object
+//  * @param res Express.js response object
+//  */
+// AuditController.prototype.getAllPublicAudit = function(req, res) {
+//
+// };
 
 /**
  * @fn getPrivateAudit
@@ -47,6 +47,7 @@ AuditController.prototype.getAllPublicAudit = function(req, res) {
 AuditController.prototype.getPrivateAudit = function(req, res) {
     let _this = this;
     let userToken = req.body.opalUserToken;
+    let numberOfRecords = req.body.numberOfRecords;
 
     if (userToken === null || userToken === undefined) {
         res.status(401);
@@ -66,7 +67,11 @@ AuditController.prototype.getPrivateAudit = function(req, res) {
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
-                return;
+
+
+                res.status(200);
+                res.json(ErrorHelper('Error occurred', error));
+
             }
         });
     }
