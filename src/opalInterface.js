@@ -147,7 +147,8 @@ OpalInterface.prototype._setupStatusController = function () {
 OpalInterface.prototype._setupInterfaceControllers = function() {
     let _this = this;
     _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
-    _this.accessLogger = new AccessLogger(_this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION),_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG));
+    _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG),
+                                                _this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION));
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                     _this.accessLogger, _this.algoHelper);
