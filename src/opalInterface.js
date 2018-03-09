@@ -12,7 +12,6 @@ const ClusterControllerModule = require('./controllers/clusterController.js');
 const AccessLogger = require('./core/accessLogger.js');
 const AlgoHelper = require('./core/algorithmsHelper.js');
 const AuditController = require('./controllers/auditController.js');
-const serveStatic = require('serve-static');
 
 /**
  * @class OpalInterface
@@ -177,10 +176,8 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.app.post('/servicesStatus', _this.clusterController.getServicesStatus);
 
     // Get the logs for Audit
-    _this.app.use(serveStatic('audit'));
+    _this.app.get('/file/:name', _this.auditController.getPublicAudit);
     _this.app.get('/log/getIllegalAccesses', _this.auditController.getPrivateAudit);
-    // get('/audit', _this.auditController.getPublicAudit)
-    //         .get('/audit/getAll', _this.auditController.getAllPublicAudit)
 
     // Manage the users who have access to the platform - Admin only
     _this.app.post('/user/', _this.usersController.getUser)

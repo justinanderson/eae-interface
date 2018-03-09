@@ -11,31 +11,37 @@ function AuditController(accessLogger) {
     this._accessLogger = accessLogger;
 
     // Bind member functions
-    // this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
-    // this.getAllPublicAudit = AuditController.prototype.getAllPublicAudit.bind(this);
+    this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
     this.getPrivateAudit = AuditController.prototype.getPrivateAudit.bind(this);
     this.addToPublicAudit = AuditController.prototype.addToPublicAudit.bind(this);
 }
 
-// /**
-//  * @fn getPublicAudit
-//  * @desc HTTP method GET handler to serve the public audit
-//  * @param req Express.js request object
-//  * @param res Express.js response object
-//  */
-// AuditController.prototype.getPublicAudit = function(req, res) {
-//
-// };
-//
-// /**
-//  * @fn getAllPublicAudit
-//  * @desc HTTP method GET handler to serve the public audit
-//  * @param req Express.js request object
-//  * @param res Express.js response object
-//  */
-// AuditController.prototype.getAllPublicAudit = function(req, res) {
-//
-// };
+/**
+ * @fn getPublicAudit
+ * @desc HTTP method GET handler to serve the public audit
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+AuditController.prototype.getPublicAudit = function(req, res) {
+    let _this = this;
+    let options = {
+        root: __dirname + '/public/',
+        dotfiles: 'deny',
+        headers: {
+            'x-timestamp': Date.now(),
+            'x-sent': true
+        }
+    };
+
+    let fileName = req.params.name;
+    res.sendFile(fileName, options, function (err) {
+        if (err) {
+            _this._accessLogger.logIllegalAccess(req);
+        }else{
+
+        }
+    });
+};
 
 /**
  * @fn getPrivateAudit
@@ -63,7 +69,7 @@ AuditController.prototype.getPrivateAudit = function(req, res) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {

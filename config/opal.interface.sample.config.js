@@ -4,5 +4,6 @@ module.exports = {
     port: 8080,
 	enableCors: true,
     algoServiceURL: 'http://algoService:80',
-    algorithmsDirectory: 'algorithms'
+    algorithmsDirectory: 'algorithms',
+    logDirectory: 'audit'
 };
