@@ -1,4 +1,5 @@
 const { interface_models } = require('../core/models.js');
+var fs = require('fs');
 
 /**
  * @fn AccessLogger
@@ -53,6 +54,37 @@ AccessLogger.prototype.logRequest = function(request){
     let _this = this;
     // write the request to the global file and to the monthly one
 
+};
+
+/**
+ * @fn dumpPrivateLog
+ * @desc Methods that retrieves the logs from mongo and dumps it into a file
+ * @param logType Log type requested. either illegal access or audit access.
+ * @param numberOfRecords number of records to get
+ * @return {string} return the filename of the log
+ */
+AccessLogger.prototype.dumpPrivateLog = function(logType,numberOfRecords){
+    let _this = this;
+    let date = new Date();
+    // write the request to the global file and to the monthly one
+    let filename = date.getDay() + '.' + date.getMonth() + '.' + date.getFullYear() + '_opal_' + logType + '_log.log';
+    let collection = null;
+
+    if(logType === 'illegal'){
+        collection = _this._illegalAccessLogCollection;
+    }else{
+        collection = _this._accessLogCollection;
+    }
+    collection.find().limit(numberOfRecords).toArray(
+        function(err, result) {
+            if (err) throw err;
+            var file = fs.createWriteStream(filename);
+            file.on('error', function(err) {throw err; });
+            result.forEach(function(v) { file.write(JSON.stringify(v) + '\n'); });
+            file.end();
+        });
+
+    return filename;
 };
 
 module.exports = AccessLogger;

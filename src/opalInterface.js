@@ -157,7 +157,8 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                           _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                           _this.accessLogger);
-    _this.auditController =  new AuditController(_this.accessLogger, global.opal_interface_config.auditDirectory);
+    _this.auditController =  new AuditController(_this.accessLogger, global.opal_interface_config.auditDirectory,
+                                                    _this.db.collection(Constants.EAE_COLLECTION_USERS));
 
     // Retrieve a specific job - Check that user requesting is owner of the job or Admin
     _this.app.post('/job', _this.jobsController.getJob);
@@ -179,7 +180,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
 
     // Get the logs for Audit
     _this.app.get('/audit/:name', _this.auditController.getPublicAudit);
-    _this.app.get('/log/getIllegalAccesses', _this.auditController.getPrivateAudit);
+    _this.app.post('/log/getAccesses', _this.auditController.getPrivateAudit);
 
     // Manage the users who have access to the platform - Admin only
     _this.app.post('/user/', _this.usersController.getUser)

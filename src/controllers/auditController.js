@@ -7,16 +7,17 @@ const fs = require('fs');
  * @desc Controller to manage the audit and logging of the platform
  * @param accessLogger Helper class to log the requests
  * @param auditDirectory Directory containing the log files
+ * @param usersCollection
  * @constructor
  */
-function AuditController(accessLogger, auditDirectory) {
+function AuditController(accessLogger, auditDirectory, usersCollection) {
     this._accessLogger = accessLogger;
     this._auditDirectory = auditDirectory;
+    this._usersCollection = usersCollection;
 
     // Bind member functions
     this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
     this.getPrivateAudit = AuditController.prototype.getPrivateAudit.bind(this);
-    this.addToPublicAudit = AuditController.prototype.addToPublicAudit.bind(this);
 }
 
 /**
@@ -61,7 +62,8 @@ AuditController.prototype.getPublicAudit = function(req, res) {
 AuditController.prototype.getPrivateAudit = function(req, res) {
     let _this = this;
     let userToken = req.body.opalUserToken;
-    let numberOfRecords = req.body.numberOfRecords;
+    let numberOfRecords = parseInt(req.body.numberOfRecords);
+    let logType = req.body.logType;
 
     if (userToken === null || userToken === undefined) {
         res.status(401);
@@ -81,11 +83,29 @@ AuditController.prototype.getPrivateAudit = function(req, res) {
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
+                _this._accessLogger.dumpPrivateLog(logType, numberOfRecords).then(function (fileName) {
+                    let options = {
+                        dotfiles: 'deny',
+                        headers: {
+                            'x-timestamp': Date.now(),
+                            'x-sent': true
+                        }
+                    };
 
-
-                res.status(200);
-                res.json(ErrorHelper('Error occurred', error));
-
+                    if (fs.existsSync(fileName)) {
+                        res.sendFile(fileName, options, function (err) {
+                            if (err) {
+                                _this._accessLogger.logIllegalAccess(req);
+                            }
+                        });
+                    } else {
+                        res.status(404);
+                        res.json(ErrorHelper('File Not found'));
+                    }
+                }, function (error) {
+                    res.status(500);
+                    res.json(ErrorHelper('Error occurred', error));
+                });
             }
         });
     }
