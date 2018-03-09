@@ -3,6 +3,7 @@ const express = require('express');
 const body_parser = require('body-parser');
 const mongodb = require('mongodb').MongoClient;
 const { ErrorHelper, StatusHelper, Constants } = require('eae-utils');
+const { Constants_Opal } = require('opal-utils');
 
 const package_json = require('../package.json');
 const StatusController = require('./controllers/statusController.js');
@@ -146,7 +147,7 @@ OpalInterface.prototype._setupStatusController = function () {
 OpalInterface.prototype._setupInterfaceControllers = function() {
     let _this = this;
     _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
-    _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG));
+    _this.accessLogger = new AccessLogger(_this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION),_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG));
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                     _this.accessLogger, _this.algoHelper);
@@ -155,7 +156,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                           _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                           _this.accessLogger);
-    _this.auditController =  new AuditController(_this.accessLogger);
+    _this.auditController =  new AuditController(_this.accessLogger, global.opal_interface_config.auditDirectory);
 
     // Retrieve a specific job - Check that user requesting is owner of the job or Admin
     _this.app.post('/job', _this.jobsController.getJob);
@@ -176,7 +177,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.app.post('/servicesStatus', _this.clusterController.getServicesStatus);
 
     // Get the logs for Audit
-    _this.app.get('/file/:name', _this.auditController.getPublicAudit);
+    _this.app.get('/audit/:name', _this.auditController.getPublicAudit);
     _this.app.get('/log/getIllegalAccesses', _this.auditController.getPrivateAudit);
 
     // Manage the users who have access to the platform - Admin only

@@ -5,5 +5,5 @@ module.exports = {
 	enableCors: true,
     algoServiceURL: 'http://algoService:80',
     algorithmsDirectory: 'algorithms',
-    logDirectory: 'audit'
+    auditDirectory: 'audit'
 };
