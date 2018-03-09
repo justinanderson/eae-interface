@@ -95,14 +95,4 @@ AuditController.prototype.getPrivateAudit = function(req, res) {
     }
 };
 
-/**
- * @fn addToPublicAudit
- * @desc HTTP method GET handler to serve the public audit
- * @param req Express.js request object
- * @param res Express.js response object
- */
-AuditController.prototype.addToPublicAudit = function(req, res) {
-
-};
-
 module.exports = AuditController;
