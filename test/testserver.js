@@ -20,8 +20,10 @@ TestServer.prototype.run = function() {
     return new Promise(function(resolve, reject) {
         // Setup node env to test during test
         process.env.TEST = 1;
-        let oldMongoConfig = config.mongoURL;
-        config.mongoURL = oldMongoConfig + uuidv4().toString().replace(/-/g, '');
+        // let oldMongoConfig = config.mongoURL;
+        //TODO: I had to comment the line below because otherwise cache couldn't access same database
+        // config.mongoURL = oldMongoConfig + uuidv4().toString().replace(/-/g, '');
+
         // Create opal interface server
         _this.opal_interface = new OpalInterface(config);
 
@@ -54,7 +56,8 @@ TestServer.prototype.stop = function() {
                         }else{
                             resolve(true);
                         }});
-                })}, function (error) {
+                });
+    }, function (error) {
                     reject(error);
             },function(error){
                 reject(error);
