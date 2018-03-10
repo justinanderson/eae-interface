@@ -102,7 +102,7 @@ test('Create a Job with a nonsupported algo type', function(done) {
     expect.assertions(4);
     let job = JSON.stringify({
         'startDate': new Date(0),
-        'endDate': new Date(1),
+        'endDate': new Date(10),
         'algorithm': 'unsupported',
         'params': {},
         'aggregationLevel': 'region',
@@ -137,7 +137,6 @@ test('Create a Job with a nonsupported algo type', function(done) {
         }
     );
 });
-
 
 test('Create a Job and subsequently get it', function(done) {
     expect.assertions(12);
@@ -199,11 +198,68 @@ test('Create a Job and subsequently get it', function(done) {
     );
 });
 
+test('Create a Job and subsequently try to create it again', function(done) {
+    expect.assertions(9);
+    let job = JSON.stringify({
+        'startDate': new Date(0),
+        'endDate': new Date(1),
+        'algorithm': 'density',
+        'params': {},
+        'aggregationLevel': 'commune',
+        'aggregationValue': 'Dakar',
+        'sample': 0.1
+    });
+    request(
+        {
+            method: 'POST',
+            baseUrl: 'http://127.0.0.1:' + config.port,
+            uri: '/job/create',
+            json: true,
+            body: {
+                opalUsername: adminUsername,
+                opalUserToken: adminPassword,
+                job: job
+            }
+        },
+        function(error, response, body) {
+            if (error) {
+                done.fail(error.toString());
+            }
+            expect(response).toBeDefined();
+            expect(response.statusCode).toEqual(200);
+            expect(body).toBeDefined();
+            expect(body.status).toEqual('OK');
+            expect(body.jobID).toBeDefined();
+            request(
+                {
+                    method: 'POST',
+                    baseUrl: 'http://127.0.0.1:' + config.port,
+                    uri: '/job/create',
+                    json: true,
+                    body: {
+                        opalUsername: adminUsername,
+                        opalUserToken: adminPassword,
+                        job: job
+                    }
+                }, function(error, response, body) {
+                    if (error) {
+                        done.fail(error.toString());
+                    }
+                    expect(response).toBeDefined();
+                    expect(response.statusCode).toEqual(200);
+                    expect(body).toBeDefined();
+                    expect(body.status).toEqual('Waiting');
+                    done();
+                });
+        }
+    );
+});
+
 test('Create a Job and subsequently cancel it', function(done) {
     expect.assertions(10);
     let job = JSON.stringify({
         'startDate': new Date(0),
-        'endDate': new Date(1),
+        'endDate': new Date(15),
         'algorithm': 'density',
         'params': {},
         'aggregationLevel': 'region',
