@@ -82,6 +82,11 @@ JobsController.prototype.createNewJob = function(req, res){
         // In opal there is no data transfer step so we move directly to queued
         newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
         newJob.requester = opalUsername;
+        newJob.startDate = new Date(jobRequest.startDate);
+        newJob.endDate = new Date(jobRequest.endDate);
+        newJob.algorithm = jobRequest.algorithm;
+        newJob.aggregationLevel = jobRequest.aggregationLevel;
+        newJob.aggregationValue = jobRequest.aggregationValue;
 
         let filter = {
             username: opalUsername,
@@ -102,7 +107,9 @@ JobsController.prototype.createNewJob = function(req, res){
                     baseUrl: _this.config.cacheURL,
                     uri: '/query',
                     json: true,
-                    body: req.body
+                    body: {
+                        job: newJob
+                    }
                 },
                 function(error, _unused__, body) {
                     if (error) {
