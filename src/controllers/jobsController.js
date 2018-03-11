@@ -64,7 +64,6 @@ JobsController.prototype.createNewJob = function(req, res){
             return;
         }
 
-        // TODO: Get list of supported algos from algo bank
         let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
 
         // Check that specified algorithm is one of the supported ones
