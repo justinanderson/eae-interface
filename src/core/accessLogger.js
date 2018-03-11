@@ -1,5 +1,6 @@
 const { interface_models } = require('../core/models.js');
-var fs = require('fs');
+const { ErrorHelper } = require('eae-utils');
+const fs = require('fs');
 
 /**
  * @fn AccessLogger
@@ -66,25 +67,37 @@ AccessLogger.prototype.logRequest = function(request){
 AccessLogger.prototype.dumpPrivateLog = function(logType,numberOfRecords){
     let _this = this;
     let date = new Date();
-    // write the request to the global file and to the monthly one
-    let filename = date.getDay() + '.' + date.getMonth() + '.' + date.getFullYear() + '_opal_' + logType + '_log.log';
-    let collection = null;
 
-    if(logType === 'illegal'){
-        collection = _this._illegalAccessLogCollection;
-    }else{
-        collection = _this._accessLogCollection;
-    }
-    collection.find().limit(numberOfRecords).toArray(
-        function(err, result) {
-            if (err) throw err;
-            var file = fs.createWriteStream(filename);
-            file.on('error', function(err) {throw err; });
-            result.forEach(function(v) { file.write(JSON.stringify(v) + '\n'); });
-            file.end();
-        });
+    new Promise(function (resolve, reject) {
+        // write the request to the global file and to the monthly one
+        let filename = date.getDay() + '.' + date.getMonth() + '.' + date.getFullYear() + '_opal_' + logType + '_log.log';
+        let collection = null;
 
-    return filename;
+        switch (logType) {
+            case 'illegal':
+                collection = _this._illegalAccessLogCollection;
+                break;
+            case 'audit':
+                collection = _this._accessLogCollection;
+                break;
+            default:
+                reject(ErrorHelper('Unknown request log type : ' + logType));
+                break;
+        }
+        collection.find().limit(numberOfRecords).toArray(
+            function (err, result) {
+                if (err) throw reject(ErrorHelper('Error when creating the file for the log',err));
+                let file = fs.createWriteStream(filename);
+                file.on('error', function (err) {
+                    throw err;
+                });
+                result.forEach(function (v) {
+                    file.write(JSON.stringify(v) + '\n');
+                });
+                file.end();
+            });
+        resolve(filename);
+    });
 };
 
 module.exports = AccessLogger;

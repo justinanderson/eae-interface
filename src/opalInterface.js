@@ -151,6 +151,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
                                                 _this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION));
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
+                                                    _this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                     _this.accessLogger, _this.algoHelper);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                       _this.accessLogger, _this.algoHelper);
@@ -173,7 +174,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.app.post('/job/cancel', _this.jobsController.cancelJob);
 
     // Retrieve the results for a specific job
-    _this.app.post('/job/results', _this.jobsController.getJobResults);
+    // _this.app.post('/job/results', _this.jobsController.getJobResults);
 
     // Status of the services in the opal - Admin only
     _this.app.post('/servicesStatus', _this.clusterController.getServicesStatus);
