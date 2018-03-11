@@ -60,6 +60,7 @@ AccessLogger.prototype.logRequest = function(opalRequest){
         let date = new Date();
         let globalFileName = 'ALL_opal_audit_log.log';
         let monthlyFileName = date.getMonth() + '.' + date.getFullYear() + '_opal_audit_log.log';
+        // eslint-disable-next-line quotes
         let data = "{0}{1}".format(opalRequest.requester, JSON.stringify(opalRequest.params));
 
         fs.appendFile(_this._auditDirectory + globalFileName, data, 'utf8', (err) => {
