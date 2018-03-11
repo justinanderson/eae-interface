@@ -16,7 +16,7 @@ install:
   - docker-compose -f ./test/docker-compose.yml images
 
 before_script:
-  - docker-compose -f ./test/docker-compose.yml up tests
+  - docker-compose -f ./test/docker-compose.yml up
   - docker ps -a
 
 script:
