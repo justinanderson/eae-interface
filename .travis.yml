@@ -16,7 +16,9 @@ install:
   - docker-compose -f ./test/docker-compose.yml images
 
 before_script:
-  - docker-compose -f ./test/docker-compose.yml up
+  - docker-compose -f ./test/docker-compose.yml up mongodb
+  - docker-compose -f ./test/docker-compose.yml up cache
+  - docker-compose -f ./test/docker-compose.yml up tests
   - docker ps -a
 
 script:
