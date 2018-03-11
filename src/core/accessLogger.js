@@ -7,12 +7,14 @@ const fs = require('fs');
  * @desc Service to log illegal accesses
  * @param accessLogCollection
  * @param illegalAccessCollection
+ * @param auditDirectory
  * @constructor
  */
-function AccessLogger(accessLogCollection,illegalAccessCollection) {
+function AccessLogger(accessLogCollection,illegalAccessCollection, auditDirectory) {
     let _this = this;
     _this._accessLogCollection = accessLogCollection;
-    _this._illegalAccessLogCollection = illegalAccessCollection ;
+    _this._illegalAccessLogCollection = illegalAccessCollection;
+    _this._auditDirectory = auditDirectory;
 
     // Bind member functions
     this.logIllegalAccess = AccessLogger.prototype.logIllegalAccess.bind(this);
@@ -48,13 +50,28 @@ AccessLogger.prototype.logAuditAccess = function(request){
 
 /**
  * @fn logRequest
- * @desc Methods that logs the valid user requests
- * @param request Access request to be logged
+ * @desc Methods that logs the valid user requests. They can either be cancels or computes.
+ * @param opalRequest Access request to be logged. The opal request contains all params and the requester.
  */
-AccessLogger.prototype.logRequest = function(request){
+AccessLogger.prototype.logRequest = function(opalRequest){
     let _this = this;
-    // write the request to the global file and to the monthly one
+    try {
+        // write the request to the global file and to the monthly one
+        let date = new Date();
+        let globalFileName = 'ALL_opal_audit_log.log';
+        let monthlyFileName = date.getMonth() + '.' + date.getFullYear() + '_opal_audit_log.log';
+        let data = "{0}{1}".format(opalRequest.requester, JSON.stringify(opalRequest.params));
 
+        fs.appendFile(_this._auditDirectory + globalFileName, data, 'utf8', (err) => {
+            if (err) throw err;
+        });
+
+        fs.appendFile(_this._auditDirectory + monthlyFileName, data, 'utf8', (err) => {
+            if (err) throw err;
+        });
+    }catch(error){
+        // Fail safe - TODO send a mail to admin
+    }
 };
 
 /**

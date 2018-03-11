@@ -82,6 +82,7 @@ JobsController.prototype.createNewJob = function(req, res){
                         if(isAlive){
                             _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
                                 _this._jobsCollection.count().then(function (count) {
+                                    _this._accessLogger.logAuditAccess(opalRequest);
                                     res.status(200);
                                     res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
                                 }, function (error) {
