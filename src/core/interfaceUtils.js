@@ -1,5 +1,5 @@
 let crypto = require('crypto');
-// crypto.DEFAULT_ENCODING = 'hex';
+const { ErrorHelper, Constants } = require('eae-utils');
 
 /**
  * @fn InterfaceUtils
@@ -12,7 +12,8 @@ function InterfaceUtils(config = {}) {
     _this.config = config;
 
     // Bind member functions
-    _this.generateUUID = InterfaceUtils.prototype.generateToken.bind(this);
+    _this.generateToken = InterfaceUtils.prototype.generateToken.bind(this);
+    _this.isBackendAlive = InterfaceUtils.prototype.isBackendAlive.bind(this);
 }
 
 /**
@@ -28,5 +29,44 @@ InterfaceUtils.prototype.generateToken =  function(userProfile) {
 
     return crypto.pbkdf2Sync(password, salt, iterations, keyByteLength, 'sha512').toString('hex');
 };
+
+/**
+ * @fn isBackendAlive
+ * @desc Tests if at least one compute and scheduler service are alive
+ * @returns {Promise<Boolean>}
+ */
+InterfaceUtils.prototype.isBackendAlive = function() {
+    let _this = this;
+
+    return new Promise(function (resolve, reject) {
+        let time = new Date();
+        time.setHours(time.getMinutes() - 5);
+        let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER];
+        let filter = {
+            computeType: {$in: types},
+            lastUpdate: {
+                '$gte': new Date(0),
+                '$lt': time
+            }
+        };
+
+        let backendServices = {};
+        _this.config.statusCollection.find(filter).toArray().then(function(docs) {
+                docs.forEach(function (node) {
+                    backendServices[node.computeType] += 1;
+                });
+                let keys = Object.keys(backendServices);
+                if(keys.length === 2){
+                    resolve(true);
+                }else{
+                    resolve(false);
+                }
+            },function(error) {
+                reject(ErrorHelper('Retrieve Nodes Status has failed', error));
+            }
+        );
+    });
+};
+
 
 module.exports = InterfaceUtils;

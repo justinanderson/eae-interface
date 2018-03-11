@@ -2,29 +2,32 @@ const { ErrorHelper, Constants, DataModels } = require('eae-utils');
 const { interface_constants } = require('../core/models.js');
 const ObjectID = require('mongodb').ObjectID;
 const JobsManagement = require('../core/jobsManagement.js');
+const InterfaceUtils = require('../core/interfaceUtils.js');
 
 /**
  * @fn JobsController
  * @desc Controller to manage the jobs service
  * @param jobsCollection
  * @param usersCollection
+ * @param statusCollection
  * @param accessLogger
  * @param algoHelper
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, accessLogger, algoHelper) {
+function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper) {
     let _this = this;
     _this._jobsCollection = jobsCollection;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
     _this._jobsManagement = new JobsManagement(_this._jobsCollection, algoHelper);
+    _this._interfaceUtils = new InterfaceUtils({statusCollection:statusCollection});
 
     // Bind member functions
     _this.createNewJob = JobsController.prototype.createNewJob.bind(this);
     _this.getJob = JobsController.prototype.getJob.bind(this);
     _this.getAllJobs = JobsController.prototype.getAllJobs.bind(this);
     _this.cancelJob = JobsController.prototype.cancelJob.bind(this);
-    _this.getJobResults = JobsController.prototype.getJobResults.bind(this);
+    // _this.getJobResults = JobsController.prototype.getJobResults.bind(this);
 }
 
 /**
@@ -56,7 +59,7 @@ JobsController.prototype.createNewJob = function(req, res){
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                     return;
                 }
                 // Build the job to be inserted for the scheduler
@@ -73,17 +76,29 @@ JobsController.prototype.createNewJob = function(req, res){
                 // Check users rights to execute the request
                 _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
                     //TODO: --EMANUELE-- request to cache if not found then schedule job
-                    _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                        _this._jobsCollection.count().then(function(count) {
-                            res.status(200);
-                            res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
-                        },function(error){
+
+                    // Check if compute servers are alive
+                    _this._interfaceUtils.isBackendAlive().then(function(isAlive){
+                        if(isAlive){
+                            _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                                _this._jobsCollection.count().then(function (count) {
+                                    _this._accessLogger.logAuditAccess(opalRequest);
+                                    res.status(200);
+                                    res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
+                                }, function (error) {
+                                    res.status(500);
+                                    res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                                });
+                            },function(error){
+                                res.status(500);
+                                res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                            });
+                        }else{
                             res.status(500);
-                            res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
-                        });
-                    },function(error){
-                        res.status(500);
-                        res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                            res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
+                        }},function(error){
+                        res.status(401);
+                        res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
                     });
                 }, function(error){
                     res.status(401);
@@ -126,7 +141,7 @@ JobsController.prototype.getJob = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }else{
                 let filter = {
@@ -137,7 +152,7 @@ JobsController.prototype.getJob = function(req, res){
                         res.status(401);
                         res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                         // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
+                        _this._accessLogger.logIllegalAccess(req);
                         return;
                     }
                     if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
@@ -147,13 +162,13 @@ JobsController.prototype.getJob = function(req, res){
                         res.status(401);
                         res.json(ErrorHelper('The user is not authorized to access this job.'));
                         // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
+                        _this._accessLogger.logIllegalAccess(req);
                     }
                 }, function (_unused__error) {
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                 });
             }}, function(error){
             res.status(500);
@@ -191,7 +206,7 @@ JobsController.prototype.getAllJobs = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if(user.type === interface_constants.USER_TYPE.admin){
@@ -206,13 +221,13 @@ JobsController.prototype.getAllJobs = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this job.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         }, function (_unused__error) {
             res.status(401);
             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
             // Log unauthorized access
-            _this._accessLogger.logAccess(req);
+            _this._accessLogger.logIllegalAccess(req);
         });
 
     }
@@ -245,7 +260,7 @@ JobsController.prototype.cancelJob = function(req, res) {
                     res.status(401);
                     res.json(ErrorHelper('The job request do not exists. The query has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                     return;
                 } else {
                     if(job.status[0] === Constants.EAE_JOB_STATUS_TRANSFERRING_DATA ||
@@ -262,11 +277,12 @@ JobsController.prototype.cancelJob = function(req, res) {
                                 res.status(401);
                                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                                 // Log unauthorized access
-                                _this._accessLogger.logAccess(req);
+                                _this._accessLogger.logIllegalAccess(req);
                                 return;
                             }
                             if (user.type === interface_constants.USER_TYPE.admin || job.requester === user.username) {
                                 _this._jobsManagement.cancelJob(job).then(function(resCancelledJob){
+                                    _this._accessLogger.logRequest();
                                     res.status(200);
                                     res.json(Object.assign({}, {status: 'Job ' + jobID + ' has been successfully cancelled.'}, resCancelledJob));
                                 },function(error){
@@ -277,13 +293,13 @@ JobsController.prototype.cancelJob = function(req, res) {
                                 res.status(401);
                                 res.json(ErrorHelper('The user is not authorized to access this job.'));
                                 // Log unauthorized access
-                                _this._accessLogger.logAccess(req);
+                                _this._accessLogger.logIllegalAccess(req);
                             }
                         }, function (_unused__error) {
                             res.status(401);
                             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                             // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
+                            _this._accessLogger.logIllegalAccess(req);
                         });
                     }else{
                         res.status(412);
@@ -302,75 +318,75 @@ JobsController.prototype.cancelJob = function(req, res) {
     }
 };
 
-/**
- * @fn getJobResults
- * @desc Retrieve the results for a specific job.
- * Check that user requesting is owner of the job or Admin
- * @param req Incoming message
- * @param res Server Response
- */
-JobsController.prototype.getJobResults = function(req, res){
-    let _this = this;
-    let userToken = req.body.opalUserToken;
-    let jobID = req.body.jobID;
-
-    if (userToken === null || userToken === undefined) {
-        res.status(401);
-        res.json(ErrorHelper('Missing token'));
-        return;
-    }
-    try{
-        _this._jobsCollection.findOne({_id: ObjectID(jobID)}).then(function(job){
-            if(job === null){
-                res.status(401);
-                res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
-                // Log unauthorized access
-                _this._accessLogger.logAccess(req);
-                return;
-            }else{
-                if(job.status[0] === Constants.EAE_JOB_STATUS_COMPLETED){
-                    let filter = {
-                        token: userToken
-                    };
-                    _this._usersCollection.findOne(filter).then(function (user) {
-                        if (user === null) {
-                            res.status(401);
-                            res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
-                            // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
-                            return;
-                        }
-                        if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
-                                //TODO: replace create manifest by sending back the results
-                                res.status(200);
-                                res.json({status: 'OK'});
-                        }else{
-                            res.status(401);
-                            res.json(ErrorHelper('The user is not authorized to access this job.'));
-                            // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
-                        }
-                    }, function (_unused__error) {
-                        res.status(401);
-                        res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
-                        // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
-                    });
-                }else{
-                    res.status(412);
-                    res.json(ErrorHelper('The job requested is not ready for collection. Current status: ' + job.status[0]));
-                }
-            }}
-                , function(error){
-                res.status(500);
-                res.json(ErrorHelper('Internal Mongo Error', error));
-            });
-
-    }
-    catch (error) {
-        res.status(500);
-        res.json(ErrorHelper('Error occurred', error));
-    }
-};
+// /**
+//  * @fn getJobResults
+//  * @desc Retrieve the results for a specific job.
+//  * Check that user requesting is owner of the job or Admin
+//  * @param req Incoming message
+//  * @param res Server Response
+//  */
+// JobsController.prototype.getJobResults = function(req, res){
+//     let _this = this;
+//     let userToken = req.body.opalUserToken;
+//     let jobID = req.body.jobID;
+//
+//     if (userToken === null || userToken === undefined) {
+//         res.status(401);
+//         res.json(ErrorHelper('Missing token'));
+//         return;
+//     }
+//     try{
+//         _this._jobsCollection.findOne({_id: ObjectID(jobID)}).then(function(job){
+//             if(job === null){
+//                 res.status(401);
+//                 res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
+//                 // Log unauthorized access
+//                 _this._accessLogger.logIllegalAccess(req);
+//                 return;
+//             }else{
+//                 if(job.status[0] === Constants.EAE_JOB_STATUS_COMPLETED){
+//                     let filter = {
+//                         token: userToken
+//                     };
+//                     _this._usersCollection.findOne(filter).then(function (user) {
+//                         if (user === null) {
+//                             res.status(401);
+//                             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
+//                             // Log unauthorized access
+//                             _this._accessLogger.logIllegalAccess(req);
+//                             return;
+//                         }
+//                         if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
+//                                 //TODO: replace create manifest by sending back the results
+//                                 res.status(200);
+//                                 res.json({status: 'OK'});
+//                         }else{
+//                             res.status(401);
+//                             res.json(ErrorHelper('The user is not authorized to access this job.'));
+//                             // Log unauthorized access
+//                             _this._accessLogger.logIllegalAccess(req);
+//                         }
+//                     }, function (_unused__error) {
+//                         res.status(401);
+//                         res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
+//                         // Log unauthorized access
+//                         _this._accessLogger.logIllegalAccess(req);
+//                     });
+//                 }else{
+//                     res.status(412);
+//                     res.json(ErrorHelper('The job requested is not ready for collection. Current status: ' + job.status[0]));
+//                 }
+//             }}
+//                 , function(error){
+//                 res.status(500);
+//                 res.json(ErrorHelper('Internal Mongo Error', error));
+//             });
+//
+//     }
+//     catch (error) {
+//         res.status(500);
+//         res.json(ErrorHelper('Error occurred', error));
+//     }
+// };
 
 module.exports = JobsController;

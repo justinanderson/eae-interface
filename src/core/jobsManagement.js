@@ -18,6 +18,7 @@ function JobsManagement(jobsCollection, algorithmHelper) {
     // Bind member functions
     _this.cancelJob = JobsManagement.prototype.cancelJob.bind(this);
     _this.checkFields = JobsManagement.prototype.checkFields.bind(this);
+    _this.authorizeRequest = JobsManagement.prototype.authorizeRequest.bind(this);
 }
 
 
@@ -111,7 +112,5 @@ JobsManagement.prototype.authorizeRequest = function(user, jobRequest) {
         }
     });
 };
-
-
 
 module.exports = JobsManagement;

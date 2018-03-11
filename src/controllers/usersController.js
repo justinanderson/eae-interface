@@ -54,7 +54,7 @@ UsersController.prototype.getUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -76,7 +76,7 @@ UsersController.prototype.getUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }
@@ -111,13 +111,13 @@ UsersController.prototype.getAllUsers = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (!(userType === interface_constants.USER_TYPE.admin || userType === interface_constants.USER_TYPE.standard || userType === 'ALL')){
                 res.status(401);
                 res.json(ErrorHelper('userType not supported. Please use "ADMIN", "STANDARD" OR "ALL"'));
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -137,7 +137,7 @@ UsersController.prototype.getAllUsers = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }
@@ -173,7 +173,7 @@ UsersController.prototype.createUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -205,7 +205,7 @@ UsersController.prototype.createUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }
@@ -242,7 +242,7 @@ UsersController.prototype.updateUser = function(req, res) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -269,7 +269,7 @@ UsersController.prototype.updateUser = function(req, res) {
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }catch (error) {
@@ -304,7 +304,7 @@ UsersController.prototype.resetUserPassword = function(req, res) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -331,7 +331,7 @@ UsersController.prototype.resetUserPassword = function(req, res) {
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }catch (error) {
@@ -365,7 +365,7 @@ UsersController.prototype.deleteUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if (user.type === interface_constants.USER_TYPE.admin) {
@@ -392,7 +392,7 @@ UsersController.prototype.deleteUser = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this command'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         });
     }
