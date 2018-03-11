@@ -28,17 +28,15 @@ function ClusterController(statusCollection, usersCollection, accessLogger) {
  */
 ClusterController.prototype.getServicesStatus = function(req, res){
     let _this = this;
-    let opalUsername = req.body.opalUsername;
     let userToken = req.body.opalUserToken;
 
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
     try {
         let filter = {
-            username: opalUsername,
             token: userToken
         };
         _this._usersCollection.findOne(filter).then(function (user) {
@@ -46,7 +44,7 @@ ClusterController.prototype.getServicesStatus = function(req, res){
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                     return;
                 }
                 if(user.type === interface_constants.USER_TYPE.admin){
@@ -62,7 +60,7 @@ ClusterController.prototype.getServicesStatus = function(req, res){
                     res.status(401);
                     res.json(ErrorHelper('The user is not authorized to access this command'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                 }
             }, function (__unused_error) { // eslint-disable-line no-unused-vars
                 res.status(401);

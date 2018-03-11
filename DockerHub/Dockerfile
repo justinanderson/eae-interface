@@ -19,6 +19,9 @@ RUN cp package.json /usr/app/ \
 
 WORKDIR /usr/app
 
+# We create the audit directory
+RUN mkdir -p /usr/app/audit
+
 # Install opal-interface npm dependencies
 RUN npm install --silent; exit 0;
 RUN cat /root/.npm/_logs/*; exit 0;

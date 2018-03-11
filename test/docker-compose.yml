@@ -21,6 +21,17 @@ services:
         volumes:
             - ./opal.cache.config.js:/usr/app/config/opal.cache.config.js
 
+    algoservice:
+        image: aoehmich/opal-algoservice:latest
+        depends_on:
+            - mongodb
+        links:
+            - mongodb
+        ports:
+            - 3001:3001
+        volumes:
+            - ./opal.algoservice.config.js:/usr/app/config/opal.algoservice.config.js
+
     tests:
         build:
             context: ..
@@ -28,8 +39,11 @@ services:
         depends_on:
             - mongodb
             - cache
+            - algoservice
         links:
             - mongodb
             - cache
+            - algoservice
         ports:
             - 80:80
+

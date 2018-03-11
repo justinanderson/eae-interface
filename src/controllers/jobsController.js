@@ -3,30 +3,34 @@ const { interface_constants } = require('../core/models.js');
 const ObjectID = require('mongodb').ObjectID;
 const JobsManagement = require('../core/jobsManagement.js');
 const request = require('request');
+const InterfaceUtils = require('../core/interfaceUtils.js');
 
 /**
  * @fn JobsController
  * @desc Controller to manage the jobs service
  * @param jobsCollection
  * @param usersCollection
+ * @param statusCollection
  * @param accessLogger
+ * @param algoHelper
  * @param config
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, accessLogger, config) {
+function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, config) {
     let _this = this;
     _this.config = config;
     _this._jobsCollection = jobsCollection;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
-    _this._jobsManagement = new JobsManagement(_this._jobsCollection);
+    _this._jobsManagement = new JobsManagement(_this._jobsCollection, algoHelper);
+    _this._interfaceUtils = new InterfaceUtils({statusCollection:statusCollection});
 
     // Bind member functions
     _this.createNewJob = JobsController.prototype.createNewJob.bind(this);
     _this.getJob = JobsController.prototype.getJob.bind(this);
     _this.getAllJobs = JobsController.prototype.getAllJobs.bind(this);
     _this.cancelJob = JobsController.prototype.cancelJob.bind(this);
-    _this.getJobResults = JobsController.prototype.getJobResults.bind(this);
+    // _this.getJobResults = JobsController.prototype.getJobResults.bind(this);
 }
 
 /**
@@ -37,111 +41,112 @@ function JobsController(jobsCollection, usersCollection, accessLogger, config) {
  */
 JobsController.prototype.createNewJob = function(req, res){
     let _this = this;
-    let opalUsername = req.body.opalUsername;
     let userToken = req.body.opalUserToken;
 
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
+
     try {
         let jobRequest = JSON.parse(req.body.job);
 
-        // Check that the query is well formed
-        let requiredJobFields = ['startDate', 'endDate', 'algorithm', 'params' , 'aggregationLevel', 'aggregationValue', 'sample'];
+        _this._jobsManagement.checkFields(jobRequest).then(function(_unused__check) {
+            let filter = {
+                token: userToken
+            };
 
-        let malformedFields = false;
-        requiredJobFields.forEach(function(key){
-            if(jobRequest[key] === null || jobRequest[key] === undefined) {
-                malformedFields = true;
-                res.status(400);
-                res.json(ErrorHelper('Job request is not well formed. Missing ' + key));
-            }
-        });
-
-        if (malformedFields) {
-            return;
-        }
-
-        let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
-
-        // Check that specified algorithm is one of the supported ones
-        if(!(listOfSupportedAlgos.includes(jobRequest['algorithm']))) {
-            res.status(400);
-            res.json(ErrorHelper('The requested algo type is currently not supported.' +
-                ' The list of supported computations: ' + listOfSupportedAlgos.toString()));
-
-            return;
-        }
-
-        // Prevent the model from being updated
-        let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
-        let newJob = Object.assign({}, eaeJobModel, jobRequest, {_id: new ObjectID()});
-        // In opal there is no data transfer step so we move directly to queued
-        newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
-        newJob.requester = opalUsername;
-        newJob.startDate = new Date(jobRequest.startDate);
-        newJob.endDate = new Date(jobRequest.endDate);
-        newJob.algorithm = jobRequest.algorithm;
-        newJob.aggregationLevel = jobRequest.aggregationLevel;
-        newJob.aggregationValue = jobRequest.aggregationValue;
-
-        let filter = {
-            username: opalUsername,
-            token: userToken
-        };
-
-        _this._usersCollection.findOne(filter).then(function (user) {
-            if (user === null) {
-                res.status(401);
-                res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
-                // Log unauthorized access
-                _this._accessLogger.logAccess(req);
-                return;
-            }
-            request(
-                {
-                    method: 'POST',
-                    baseUrl: _this.config.cacheURL,
-                    uri: '/query',
-                    json: true,
-                    body: {
-                        job: newJob
-                    }
-                },
-                function(error, _unused__, body) {
-                    if (error) {
-                        res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
-                    }
-                    else if (body.result) {
-                        // The query has been found with a result, return the result immediately
-                        res.status(200);
-                        //TODO: choose format of answer to user
-                        res.json({status: 'OK', result: body.result});
-                    }
-                    else if (body.waiting) {
-                        // The query has already been submitted but the result is not ready yet, tell the user to wait
-                        res.status(200);
-                        //TODO: choose format of answer to user
-                        res.json({status: 'Waiting'});
-                    }
-                    else {
-                        // The query has not been found, insert job in mongo so scheduler can execute it
-                        _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                            res.status(200);
-                            //TODO: choose format of answer to user
-                            res.json({status: 'OK', jobID: newJob._id.toString()});
-                        },function(error){
-                            res.status(500);
-                            res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
-                        });
-                    }
+            _this._usersCollection.findOne(filter).then(function (user) {
+                if (user === null) {
+                    res.status(401);
+                    res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
+                    // Log unauthorized access
+                    _this._accessLogger.logIllegalAccess(req);
+                    return;
                 }
-            );
-        },function(error) {
-            res.status(500);
-            res.json(ErrorHelper('Internal Mongo Error', error));
+                // Build the job to be inserted for the scheduler
+                let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
+
+                // We need to reformat the OPAL job request to feat the eAE's one
+                let opalRequest = {params: jobRequest, requester: user.username};
+
+                // We merge all those parameters to make the final job
+                let newJob = Object.assign({}, eaeJobModel, opalRequest, {_id: new ObjectID(), type: Constants.EAE_JOB_TYPE_PYTHON2});
+
+                // In opal there is no data transfer step so we move directly to queued
+                newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
+                newJob.requester = opalUsername;
+                newJob.startDate = new Date(jobRequest.startDate);
+                newJob.endDate = new Date(jobRequest.endDate);
+                newJob.algorithm = jobRequest.algorithm;
+                newJob.aggregationLevel = jobRequest.aggregationLevel;
+                newJob.aggregationValue = jobRequest.aggregationValue;
+
+                // Check users rights to execute the request
+                _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
+                    request(
+                        {
+                            method: 'POST',
+                            baseUrl: _this.config.cacheURL,
+                            uri: '/query',
+                            json: true,
+                            body: {
+                                job: newJob
+                            }
+                        },
+                        function(error, _unused__, body) {
+                            if (!error && body.result) {
+                                // The query has been found with a result, return the result immediately
+                                res.status(200);
+                                //TODO: choose format of answer to user
+                                res.json({status: 'OK', result: body.result});
+                            }
+                            else if (!error && body.waiting) {
+                                // The query has already been submitted but the result is not ready yet, tell the user to wait
+                                res.status(200);
+                                //TODO: choose format of answer to user
+                                res.json({status: 'Waiting'});
+                            }
+                            else {
+                                // The query has not been found, insert job in mongo so scheduler can execute it
+                                // Check if compute servers are alive
+                                _this._interfaceUtils.isBackendAlive().then(function(isAlive){
+                                    if(isAlive){
+                                        _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                                            _this._jobsCollection.count().then(function (count) {
+                                                _this._accessLogger.logAuditAccess(opalRequest);
+                                                res.status(200);
+                                                res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
+                                            }, function (error) {
+                                                res.status(500);
+                                                res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                                            });
+                                        },function(error){
+                                            res.status(500);
+                                            res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                                        });
+                                    }else{
+                                        res.status(500);
+                                        res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
+                                    }},function(error){
+                                    res.status(401);
+                                    res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
+                                });
+                            }
+                        }
+                    );
+                }, function(error){
+                    res.status(401);
+                    res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
+                });
+            },function(error) {
+                res.status(500);
+                res.json(ErrorHelper('Internal Mongo Error', error));
+            });
+        }, function(error){
+            res.status(401);
+            res.json(ErrorHelper('The field check failed.', error));
         });
     }
     catch (error) {
@@ -158,13 +163,12 @@ JobsController.prototype.createNewJob = function(req, res){
  */
 JobsController.prototype.getJob = function(req, res){
     let _this = this;
-    let opalUsername = req.body.opalUsername;
     let userToken = req.body.opalUserToken;
     let jobID = req.body.jobID;
 
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
     try {
@@ -173,11 +177,10 @@ JobsController.prototype.getJob = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }else{
                 let filter = {
-                    username: opalUsername,
                     token: userToken
                 };
                 _this._usersCollection.findOne(filter).then(function (user) {
@@ -185,7 +188,7 @@ JobsController.prototype.getJob = function(req, res){
                         res.status(401);
                         res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                         // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
+                        _this._accessLogger.logIllegalAccess(req);
                         return;
                     }
                     if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
@@ -195,13 +198,13 @@ JobsController.prototype.getJob = function(req, res){
                         res.status(401);
                         res.json(ErrorHelper('The user is not authorized to access this job.'));
                         // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
+                        _this._accessLogger.logIllegalAccess(req);
                     }
                 }, function (_unused__error) {
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                 });
             }}, function(error){
             res.status(500);
@@ -222,18 +225,15 @@ JobsController.prototype.getJob = function(req, res){
  */
 JobsController.prototype.getAllJobs = function(req, res){
     let _this = this;
-    let opalUsername = req.body.opalUsername;
     let userToken = req.body.opalUserToken;
 
-
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
     try {
         let filter = {
-            username: opalUsername,
             token: userToken
         };
 
@@ -242,7 +242,7 @@ JobsController.prototype.getAllJobs = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
                 return;
             }
             if(user.type === interface_constants.USER_TYPE.admin){
@@ -257,13 +257,13 @@ JobsController.prototype.getAllJobs = function(req, res){
                 res.status(401);
                 res.json(ErrorHelper('The user is not authorized to access this job.'));
                 // Log unauthorized access
-                _this._accessLogger.logAccess(req);
+                _this._accessLogger.logIllegalAccess(req);
             }
         }, function (_unused__error) {
             res.status(401);
             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
             // Log unauthorized access
-            _this._accessLogger.logAccess(req);
+            _this._accessLogger.logIllegalAccess(req);
         });
 
     }
@@ -281,23 +281,22 @@ JobsController.prototype.getAllJobs = function(req, res){
  */
 JobsController.prototype.cancelJob = function(req, res) {
     let _this = this;
-    let opalUsername = req.body.opalUsername;
     let userToken = req.body.opalUserToken;
     let jobID = req.body.jobID;
 
 
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
+    if (userToken === null || userToken === undefined) {
         res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
+        res.json(ErrorHelper('Missing token'));
         return;
     }
     try{
         _this._jobsCollection.findOne({_id: ObjectID(jobID)}).then(function(job) {
                 if (job === null) {
                     res.status(401);
-                    res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
+                    res.json(ErrorHelper('The job request do not exists. The query has been logged.'));
                     // Log unauthorized access
-                    _this._accessLogger.logAccess(req);
+                    _this._accessLogger.logIllegalAccess(req);
                     return;
                 } else {
                     if(job.status[0] === Constants.EAE_JOB_STATUS_TRANSFERRING_DATA ||
@@ -307,7 +306,6 @@ JobsController.prototype.cancelJob = function(req, res) {
                         job.status[0] === Constants.EAE_JOB_STATUS_ERROR
                     ){
                         let filter = {
-                            username: opalUsername,
                             token: userToken
                         };
                         _this._usersCollection.findOne(filter).then(function (user) {
@@ -315,11 +313,12 @@ JobsController.prototype.cancelJob = function(req, res) {
                                 res.status(401);
                                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                                 // Log unauthorized access
-                                _this._accessLogger.logAccess(req);
+                                _this._accessLogger.logIllegalAccess(req);
                                 return;
                             }
                             if (user.type === interface_constants.USER_TYPE.admin || job.requester === user.username) {
                                 _this._jobsManagement.cancelJob(job).then(function(resCancelledJob){
+                                    _this._accessLogger.logRequest();
                                     res.status(200);
                                     res.json(Object.assign({}, {status: 'Job ' + jobID + ' has been successfully cancelled.'}, resCancelledJob));
                                 },function(error){
@@ -330,13 +329,13 @@ JobsController.prototype.cancelJob = function(req, res) {
                                 res.status(401);
                                 res.json(ErrorHelper('The user is not authorized to access this job.'));
                                 // Log unauthorized access
-                                _this._accessLogger.logAccess(req);
+                                _this._accessLogger.logIllegalAccess(req);
                             }
                         }, function (_unused__error) {
                             res.status(401);
                             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
                             // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
+                            _this._accessLogger.logIllegalAccess(req);
                         });
                     }else{
                         res.status(412);
@@ -355,77 +354,75 @@ JobsController.prototype.cancelJob = function(req, res) {
     }
 };
 
-/**
- * @fn getJobResults
- * @desc Retrieve the results for a specific job.
- * Check that user requesting is owner of the job or Admin
- * @param req Incoming message
- * @param res Server Response
- */
-JobsController.prototype.getJobResults = function(req, res){
-    let _this = this;
-    let opalUsername = req.body.opalUsername;
-    let userToken = req.body.opalUserToken;
-    let jobID = req.body.jobID;
-
-    if (opalUsername === null || opalUsername === undefined || userToken === null || userToken === undefined) {
-        res.status(401);
-        res.json(ErrorHelper('Missing username or token'));
-        return;
-    }
-    try{
-        _this._jobsCollection.findOne({_id: ObjectID(jobID)}).then(function(job){
-            if(job === null){
-                res.status(401);
-                res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
-                // Log unauthorized access
-                _this._accessLogger.logAccess(req);
-                return;
-            }else{
-                if(job.status[0] === Constants.EAE_JOB_STATUS_COMPLETED){
-                    let filter = {
-                        username: opalUsername,
-                        token: userToken
-                    };
-                    _this._usersCollection.findOne(filter).then(function (user) {
-                        if (user === null) {
-                            res.status(401);
-                            res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
-                            // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
-                            return;
-                        }
-                        if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
-                                //TODO: replace create manifest by sending back the results
-                                res.status(200);
-                                res.json({status: 'OK'});
-                        }else{
-                            res.status(401);
-                            res.json(ErrorHelper('The user is not authorized to access this job.'));
-                            // Log unauthorized access
-                            _this._accessLogger.logAccess(req);
-                        }
-                    }, function (_unused__error) {
-                        res.status(401);
-                        res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
-                        // Log unauthorized access
-                        _this._accessLogger.logAccess(req);
-                    });
-                }else{
-                    res.status(412);
-                    res.json(ErrorHelper('The job requested is not ready for collection. Current status: ' + job.status[0]));
-                }
-            }}
-                , function(error){
-                res.status(500);
-                res.json(ErrorHelper('Internal Mongo Error', error));
-            });
-
-    }
-    catch (error) {
-        res.status(500);
-        res.json(ErrorHelper('Error occurred', error));
-    }
-};
+// /**
+//  * @fn getJobResults
+//  * @desc Retrieve the results for a specific job.
+//  * Check that user requesting is owner of the job or Admin
+//  * @param req Incoming message
+//  * @param res Server Response
+//  */
+// JobsController.prototype.getJobResults = function(req, res){
+//     let _this = this;
+//     let userToken = req.body.opalUserToken;
+//     let jobID = req.body.jobID;
+//
+//     if (userToken === null || userToken === undefined) {
+//         res.status(401);
+//         res.json(ErrorHelper('Missing token'));
+//         return;
+//     }
+//     try{
+//         _this._jobsCollection.findOne({_id: ObjectID(jobID)}).then(function(job){
+//             if(job === null){
+//                 res.status(401);
+//                 res.json(ErrorHelper('The job request do not exit. The query has been logged.'));
+//                 // Log unauthorized access
+//                 _this._accessLogger.logIllegalAccess(req);
+//                 return;
+//             }else{
+//                 if(job.status[0] === Constants.EAE_JOB_STATUS_COMPLETED){
+//                     let filter = {
+//                         token: userToken
+//                     };
+//                     _this._usersCollection.findOne(filter).then(function (user) {
+//                         if (user === null) {
+//                             res.status(401);
+//                             res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
+//                             // Log unauthorized access
+//                             _this._accessLogger.logIllegalAccess(req);
+//                             return;
+//                         }
+//                         if(user.type === interface_constants.USER_TYPE.admin || job.requester === user.username){
+//                                 //TODO: replace create manifest by sending back the results
+//                                 res.status(200);
+//                                 res.json({status: 'OK'});
+//                         }else{
+//                             res.status(401);
+//                             res.json(ErrorHelper('The user is not authorized to access this job.'));
+//                             // Log unauthorized access
+//                             _this._accessLogger.logIllegalAccess(req);
+//                         }
+//                     }, function (_unused__error) {
+//                         res.status(401);
+//                         res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
+//                         // Log unauthorized access
+//                         _this._accessLogger.logIllegalAccess(req);
+//                     });
+//                 }else{
+//                     res.status(412);
+//                     res.json(ErrorHelper('The job requested is not ready for collection. Current status: ' + job.status[0]));
+//                 }
+//             }}
+//                 , function(error){
+//                 res.status(500);
+//                 res.json(ErrorHelper('Internal Mongo Error', error));
+//             });
+//
+//     }
+//     catch (error) {
+//         res.status(500);
+//         res.json(ErrorHelper('Error occurred', error));
+//     }
+// };
 
 module.exports = JobsController;

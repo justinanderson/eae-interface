@@ -2,6 +2,7 @@ let express = require('express');
 let OpalInterface = require('../src/opalInterface.js');
 let config = require('../config/opal.interface.test.config.js');
 const uuidv4 = require('uuid/v4');
+const request = require('request');
 const { interface_constants, interface_models } = require('../src/core/models.js');
 
 function TestServer() {
@@ -13,6 +14,7 @@ function TestServer() {
     this.stop = TestServer.prototype.stop.bind(this);
     this.addAdminUser = TestServer.prototype.addAdminUser.bind(this);
     this.addCluster = TestServer.prototype.addCluster.bind(this);
+    this.addAlgorithm = TestServer.prototype.addAlgorithm.bind(this);
 }
 
 TestServer.prototype.run = function() {
@@ -73,12 +75,41 @@ TestServer.prototype.addAdminUser = function(username, password){
             type: interface_constants.USER_TYPE.admin,
             username : username,
             token: password,
+            defaultAccessLevel : "aggregation_level_1",
+            authorizedAlgorithms : {
+                "density" : "aggregation_level_1"
+            }
         };
         let adminUser = Object.assign({}, interface_models.USER_MODEL , admin);
         _this.opal_interface.usersController._usersCollection.insertOne(adminUser).then(function () {
             resolve(true);
         }, function (error) {
             reject(error);
+        });
+    });
+};
+
+TestServer.prototype.addAlgorithm = function(){
+    return new Promise(function(resolve, reject) {
+        let algo = {"algoName":"density",
+            "description":"Population density",
+            "algorithm":{"code": "IyAtKi0gY29kaW5nOiB1dGYtOCAtKi0NCiIiIkNhbGN1bGF0ZSBwb3B1bGF0aW9uIGRlbnNpdHkuIiIiDQpmcm9tIG9wYWxhbGdvcml0aG1zLmNvcmUgaW1wb3J0IE9QQUxBbGdvcml0aG0NCmltcG9ydCBjc3YNCmltcG9ydCBvcGVyYXRvcg0KDQoNCmNsYXNzIFBvcHVsYXRpb25EZW5zaXR5KE9QQUxBbGdvcml0aG0pOg0KICAgICIiIkNhbGN1bGF0ZSBwb3B1bGF0aW9uIGRlbnNpdHkuIiIiDQoNCiAgICBkZWYgX19pbml0X18oc2VsZik6DQogICAgICAgICIiIkluaXRpYWxpemUgcG9wdWxhdGlvbiBkZW5zaXR5LiIiIg0KICAgICAgICBzdXBlcihQb3B1bGF0aW9uRGVuc2l0eSwgc2VsZikuX19pbml0X18oKQ0KDQogICAgZGVmIG1hcChzZWxmLCB1c2VyX2Nzdl9maWxlKToNCiAgICAgICAgIiIiTWFwcGluZyB1c2VyX2Nzdl9maWxlIHRvIHVzZXIgYW5kIG1vc3QgdXNlZCBhbnRlbm5hLiIiIg0KICAgICAgICBhbnRlbm5hcyA9IGRpY3QoKQ0KICAgICAgICB3aXRoIG9wZW4odXNlcl9jc3ZfZmlsZSwgJ3InKSBhcyBjc3ZfZmlsZToNCiAgICAgICAgICAgIGNzdl9yZWFkZXIgPSBjc3YucmVhZGVyKGNzdl9maWxlLCBkZWxpbWl0ZXI9JywnKQ0KICAgICAgICAgICAgZm9yIHJvdyBpbiBjc3ZfcmVhZGVyOg0KICAgICAgICAgICAgICAgIGEgPSBzdHIocm93WzVdKQ0KICAgICAgICAgICAgICAgIGlmIGEgaW4gYW50ZW5uYXM6DQogICAgICAgICAgICAgICAgICAgIGFudGVubmFzW2FdICs9IDENCiAgICAgICAgICAgICAgICBlbHNlOg0KICAgICAgICAgICAgICAgICAgICBhbnRlbm5hc1thXSA9IDENCiAgICAgICAgYW50ZW5uYSA9IG1heChhbnRlbm5hcy5pdGVtcygpLCBrZXk9b3BlcmF0b3IuaXRlbWdldHRlcigxKSlbMF0NCiAgICAgICAgcmV0dXJuIGFudGVubmENCg0KICAgIGRlZiByZWR1Y2Uoc2VsZiwgcmVzdWx0c19jc3ZfZmlsZSk6DQogICAgICAgICIiIkNvbnZlcnQgcmVzdWx0cyB0byBjb3VudCBvZiBwb3B1bGF0aW9uIHBlciBhbnRlbm5hLiIiIg0KICAgICAgICBkZW5zaXR5ID0gZGljdCgpDQogICAgICAgIHdpdGggb3BlbihyZXN1bHRzX2Nzdl9maWxlLCAncicpIGFzIGNzdl9maWxlOg0KICAgICAgICAgICAgY3N2X3JlYWRlciA9IGNzdi5yZWFkZXIoY3N2X2ZpbGUsIGRlbGltaXRlcj0nICcpDQogICAgICAgICAgICBmb3Igcm93IGluIGNzdl9yZWFkZXI6DQogICAgICAgICAgICAgICAgYSA9IHN0cihyb3dbMV0pDQogICAgICAgICAgICAgICAgaWYgYSBpbiBkZW5zaXR5Og0KICAgICAgICAgICAgICAgICAgICBkZW5zaXR5W2FdICs9IDENCiAgICAgICAgICAgICAgICBlbHNlOg0KICAgICAgICAgICAgICAgICAgICBkZW5zaXR5W2FdID0gMQ0KICAgICAgICByZXR1cm4gZGVuc2l0eQ0K" , "className":"PopulationDensity", "reducer":"count"},
+            "filename":"popDensity.py"};
+        request({
+            method: 'POST',
+            baseUrl: config.algoServiceURL,
+            uri: '/add',
+            body: algo,
+            json: true
+        }, function(error, response, _unused__body) {
+            if (error) {
+                reject(error.toString());
+            }
+            if(response.statusCode === 200) {
+                resolve(true);
+            }else{
+                resolve(false);
+            }
         });
     });
 };

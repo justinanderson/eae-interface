@@ -3,6 +3,7 @@ const express = require('express');
 const body_parser = require('body-parser');
 const mongodb = require('mongodb').MongoClient;
 const { ErrorHelper, StatusHelper, Constants } = require('eae-utils');
+const { Constants_Opal } = require('opal-utils');
 
 const package_json = require('../package.json');
 const StatusController = require('./controllers/statusController.js');
@@ -10,6 +11,8 @@ const JobsControllerModule = require('./controllers/jobsController.js');
 const UsersControllerModule = require('./controllers/usersController.js');
 const ClusterControllerModule = require('./controllers/clusterController.js');
 const AccessLogger = require('./core/accessLogger.js');
+const AlgoHelper = require('./core/algorithmsHelper.js');
+const AuditController = require('./controllers/auditController.js');
 
 /**
  * @class OpalInterface
@@ -143,17 +146,21 @@ OpalInterface.prototype._setupStatusController = function () {
  */
 OpalInterface.prototype._setupInterfaceControllers = function() {
     let _this = this;
-
-    _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG));
+    _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
+    _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG),
+                                                _this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION),
+                                                global.opal_interface_config.auditDirectory);
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
-                                                    _this.accessLogger,
-                                                    _this.config);
+                                                    _this.db.collection(Constants.EAE_COLLECTION_STATUS),
+                                                    _this.accessLogger, _this.algoHelper, _this.config);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
-                                                      _this.accessLogger);
+                                                      _this.accessLogger, _this.algoHelper);
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                           _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                           _this.accessLogger);
+    _this.auditController =  new AuditController(_this.accessLogger, global.opal_interface_config.auditDirectory,
+                                                    _this.db.collection(Constants.EAE_COLLECTION_USERS));
 
     // Retrieve a specific job - Check that user requesting is owner of the job or Admin
     _this.app.post('/job', _this.jobsController.getJob);
@@ -168,14 +175,21 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.app.post('/job/cancel', _this.jobsController.cancelJob);
 
     // Retrieve the results for a specific job
-    _this.app.post('/job/results', _this.jobsController.getJobResults);
+    // _this.app.post('/job/results', _this.jobsController.getJobResults);
 
     // Status of the services in the opal - Admin only
     _this.app.post('/servicesStatus', _this.clusterController.getServicesStatus);
 
+    // Get the logs for Audit
+    _this.app.get('/audit/:name', _this.auditController.getPublicAudit);
+    _this.app.post('/log/getAccesses', _this.auditController.getPrivateAudit);
+
     // Manage the users who have access to the platform - Admin only
     _this.app.post('/user/', _this.usersController.getUser)
         .post('/user/create', _this.usersController.createUser)
+        .post('/user/update', _this.usersController.updateUser)
+        .post('/user/resetPassword', _this.usersController.resetUserPassword)
+        .post('/user/getAll', _this.usersController.getAllUsers)
         .delete('/user/delete', _this.usersController.deleteUser);
 
     // :)
