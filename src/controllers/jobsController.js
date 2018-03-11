@@ -76,7 +76,7 @@ JobsController.prototype.createNewJob = function(req, res){
 
                 // In opal there is no data transfer step so we move directly to queued
                 newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
-                newJob.requester = opalUsername;
+                newJob.requester = user.username;
                 newJob.startDate = new Date(jobRequest.startDate);
                 newJob.endDate = new Date(jobRequest.endDate);
                 newJob.algorithm = jobRequest.algorithm;
