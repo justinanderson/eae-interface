@@ -2,7 +2,6 @@ const { ErrorHelper, Constants, DataModels } = require('eae-utils');
 const { interface_constants } = require('../core/models.js');
 const ObjectID = require('mongodb').ObjectID;
 const JobsManagement = require('../core/jobsManagement.js');
-const request = require('request');
 const InterfaceUtils = require('../core/interfaceUtils.js');
 
 /**
