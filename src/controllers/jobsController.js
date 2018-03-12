@@ -50,6 +50,7 @@ JobsController.prototype.createNewJob = function(req, res){
     }
 
     try {
+        // Check the validity of the JOB
         let jobRequest = JSON.parse(req.body.job);
 
         _this._jobsManagement.checkFields(jobRequest).then(function(_unused__check) {
@@ -75,13 +76,8 @@ JobsController.prototype.createNewJob = function(req, res){
                 let newJob = Object.assign({}, eaeJobModel, opalRequest, {_id: new ObjectID(), type: Constants.EAE_JOB_TYPE_PYTHON2});
 
                 // In opal there is no data transfer step so we move directly to queued
+                newJob.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
                 newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
-                newJob.requester = user.username;
-                newJob.startDate = new Date(jobRequest.startDate);
-                newJob.endDate = new Date(jobRequest.endDate);
-                newJob.algorithm = jobRequest.algorithm;
-                newJob.aggregationLevel = jobRequest.aggregationLevel;
-                newJob.aggregationValue = jobRequest.aggregationValue;
 
                 // Check users rights to execute the request
                 _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
