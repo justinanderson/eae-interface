@@ -85,14 +85,12 @@ JobsController.prototype.createNewJob = function(req, res){
                         if (body.result) {
                             // The query has been found with a result, return the result immediately
                             res.status(200);
-                            //TODO: choose format of answer to user
                             res.json({status: 'OK', result: body.result});
                         }
                         else if (body.waiting) {
                             // The query has already been submitted but the result is not ready yet, tell the user to wait
                             res.status(200);
-                            //TODO: choose format of answer to user
-                            res.json({status: 'Waiting'});
+                            res.json({status: 'The Job is being computed. The current status is: ' + body.status});
                         }
                     }, function(_unused__error) {
                         // The query has not been found, insert job in mongo so scheduler can execute it
