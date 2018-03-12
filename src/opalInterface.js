@@ -153,7 +153,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_STATUS),
-                                                    _this.accessLogger, _this.algoHelper, _this.config);
+                                                    _this.accessLogger, _this.algoHelper, _this.config.cacheURL);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                       _this.accessLogger, _this.algoHelper);
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),

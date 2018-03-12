@@ -13,12 +13,12 @@ const InterfaceUtils = require('../core/interfaceUtils.js');
  * @param statusCollection
  * @param accessLogger
  * @param algoHelper
- * @param config
+ * @param cacheURL
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, config) {
+function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, cacheURL) {
     let _this = this;
-    _this.config = config;
+    _this.cacheURL = cacheURL;
     _this._jobsCollection = jobsCollection;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
@@ -84,7 +84,7 @@ JobsController.prototype.createNewJob = function(req, res){
                     request(
                         {
                             method: 'POST',
-                            baseUrl: _this.config.cacheURL,
+                            baseUrl: _this.cacheURL,
                             uri: '/query',
                             json: true,
                             body: {
