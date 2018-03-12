@@ -76,58 +76,22 @@ test('Get Job No jobID', function(done) {
     );
 });
 
-// <<<<<<< HEAD
-// test('Create a Job with a nonsupported algo type', function(done) {
-//     expect.assertions(4);
+// test('Create a Job and subsequently get it', function(done) {
+//     expect.assertions(12);
+//
 //     let job = JSON.stringify({
 //         'startDate': new Date(0),
 //         'endDate': new Date(10),
-//         'algorithm': 'unsupported',
-//         'params': {},
-//         'aggregationLevel': 'region',
-//         'aggregationValue': 'Dakar',
-//         'sample': 0.1
-//     });
-//     request(
-//         {
-//             method: 'POST',
-//             baseUrl: 'http://127.0.0.1:' + config.port,
-//             uri: '/job/create',
-//             json: true,
-//             body: {
-//                 opalUsername: adminUsername,
-//                 opalUserToken: adminPassword,
-//                 job: job
-//             }
-//         },
-//         function(error, response, body) {
-//             if (error) {
-//                 done.fail(error.toString());
-//             }
-//             expect(response).toBeDefined();
-//             expect(response.statusCode).toEqual(400);
-//             expect(body).toBeDefined();
-//
-//             let listOfSupportedAlgos = ['density', 'commuting', 'migration'];
-//
-//             expect(body.error).toEqual('The requested algo type is currently not supported.' +
-//                 ' The list of supported computations: ' + listOfSupportedAlgos.toString());
-//             done();
-//         }
-//     );
-// });
-//
-// test('Create a Job and subsequently get it', function(done) {
-//     expect.assertions(12);
-//     let job = JSON.stringify({
-//         'startDate': new Date(0),
-//         'endDate': new Date(1),
 //         'algorithm': 'density',
-//         'params': {},
 //         'aggregationLevel': 'region',
 //         'aggregationValue': 'Dakar',
-//         'sample': 0.1
+//         'sample': 0.1,
+//         'params': {
+//             first_window: new Date(0),
+//             second_window: new Date(10)
+//         }
 //     });
+//
 //     request(
 //         {
 //             method: 'POST',
@@ -144,6 +108,7 @@ test('Get Job No jobID', function(done) {
 //             if (error) {
 //                 done.fail(error.toString());
 //             }
+//             console.log(response.body);
 //             expect(response).toBeDefined();
 //             expect(response.statusCode).toEqual(200);
 //             expect(body).toBeDefined();
@@ -292,7 +257,7 @@ test('Get Job No jobID', function(done) {
 //         }
 //     );
 // });
-// =======
+
 // test('Create a Job with a nonsupported compute type', function(done) {
 //     expect.assertions(4);
 //     let job = JSON.stringify({"type": "python", "main": "hello.py", "params": [], "input": ["input1.txt", "input2.txt"]});
@@ -427,7 +392,6 @@ test('Get Job No jobID', function(done) {
 //         }
 //     );
 // });
-// >>>>>>> master
 
 afterAll(function() {
     return new Promise(function (resolve, reject) {
