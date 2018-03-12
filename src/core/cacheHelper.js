@@ -1,10 +1,9 @@
 const request = require('request');
 
 /**
- * @fn AlgorithmHelper
- * @desc Algorithms manager. Use it to update the available algorithms in OPAL
- * @param algoServiceURL URL of the algorithm service
- * @param algorithmsSpecsFolder schemas of the algorithms
+ * @fn CacheHelper
+ * @desc Cache manager. Use it to send requests to the cache
+ * @param cacheURL URL of the algorithm service
  * @constructor
  */
 function CacheHelper(cacheURL) {
