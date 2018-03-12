@@ -12,6 +12,7 @@ const UsersControllerModule = require('./controllers/usersController.js');
 const ClusterControllerModule = require('./controllers/clusterController.js');
 const AccessLogger = require('./core/accessLogger.js');
 const AlgoHelper = require('./core/algorithmsHelper.js');
+const CacheHelper = require('./core/cacheHelper.js');
 const AuditController = require('./controllers/auditController.js');
 
 /**
@@ -147,13 +148,14 @@ OpalInterface.prototype._setupStatusController = function () {
 OpalInterface.prototype._setupInterfaceControllers = function() {
     let _this = this;
     _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
+    _this.cacheHelper = new CacheHelper(global.opal_interface_config.cacheURL);
     _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG),
                                                 _this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION),
                                                 global.opal_interface_config.auditDirectory);
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                     _this.db.collection(Constants.EAE_COLLECTION_STATUS),
-                                                    _this.accessLogger, _this.algoHelper, _this.config.cacheURL);
+                                                    _this.accessLogger, _this.algoHelper, _this.cacheHelper);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                       _this.accessLogger, _this.algoHelper);
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),

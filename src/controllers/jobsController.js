@@ -13,12 +13,12 @@ const InterfaceUtils = require('../core/interfaceUtils.js');
  * @param statusCollection
  * @param accessLogger
  * @param algoHelper
- * @param cacheURL
+ * @param cacheHelper
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, cacheURL) {
+function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, cacheHelper) {
     let _this = this;
-    _this.cacheURL = cacheURL;
+    _this.cacheHelper = cacheHelper;
     _this._jobsCollection = jobsCollection;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
@@ -81,57 +81,45 @@ JobsController.prototype.createNewJob = function(req, res){
 
                 // Check users rights to execute the request
                 _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
-                    request(
-                        {
-                            method: 'POST',
-                            baseUrl: _this.cacheURL,
-                            uri: '/query',
-                            json: true,
-                            body: {
-                                job: newJob
-                            }
-                        },
-                        function(error, _unused__, body) {
-                            if (!error && body.result) {
-                                // The query has been found with a result, return the result immediately
-                                res.status(200);
-                                //TODO: choose format of answer to user
-                                res.json({status: 'OK', result: body.result});
-                            }
-                            else if (!error && body.waiting) {
-                                // The query has already been submitted but the result is not ready yet, tell the user to wait
-                                res.status(200);
-                                //TODO: choose format of answer to user
-                                res.json({status: 'Waiting'});
-                            }
-                            else {
-                                // The query has not been found, insert job in mongo so scheduler can execute it
-                                // Check if compute servers are alive
-                                _this._interfaceUtils.isBackendAlive().then(function(isAlive){
-                                    if(isAlive){
-                                        _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                                            _this._jobsCollection.count().then(function (count) {
-                                                _this._accessLogger.logAuditAccess(opalRequest);
-                                                res.status(200);
-                                                res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
-                                            }, function (error) {
-                                                res.status(500);
-                                                res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
-                                            });
-                                        },function(error){
-                                            res.status(500);
-                                            res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
-                                        });
-                                    }else{
-                                        res.status(500);
-                                        res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
-                                    }},function(error){
-                                    res.status(401);
-                                    res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
-                                });
-                            }
+                    _this.cacheHelper.sendRequestToCache(newJob).then(function(body) {
+                        if (body.result) {
+                            // The query has been found with a result, return the result immediately
+                            res.status(200);
+                            //TODO: choose format of answer to user
+                            res.json({status: 'OK', result: body.result});
                         }
-                    );
+                        else if (body.waiting) {
+                            // The query has already been submitted but the result is not ready yet, tell the user to wait
+                            res.status(200);
+                            //TODO: choose format of answer to user
+                            res.json({status: 'Waiting'});
+                        }
+                    }, function(_unused__error) {
+                        // The query has not been found, insert job in mongo so scheduler can execute it
+                        // Check if compute servers are alive
+                        _this._interfaceUtils.isBackendAlive().then(function(isAlive){
+                            if(isAlive){
+                                _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                                    _this._jobsCollection.count().then(function (count) {
+                                        _this._accessLogger.logAuditAccess(opalRequest);
+                                        res.status(200);
+                                        res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
+                                    }, function (error) {
+                                        res.status(500);
+                                        res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                                    });
+                                },function(error){
+                                    res.status(500);
+                                    res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
+                                });
+                            }else{
+                                res.status(500);
+                                res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
+                            }},function(error){
+                            res.status(401);
+                            res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
+                        });
+                    });
                 }, function(error){
                     res.status(401);
                     res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
