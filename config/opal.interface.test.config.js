@@ -5,6 +5,6 @@ module.exports = {
     port: 80,
     enableCors: true,
     algoServiceURL: 'http://algoservice:3001',
-    algorithmsDirectory: 'algorithms',
+    algorithmsDirectory: '/usr/app/algorithms',
     auditDirectory: '/usr/app/audit'
 };
