@@ -76,12 +76,12 @@ test('Get Job No jobID', function(done) {
     );
 });
 
-// test('Create a Job and subsequently get it', function(done) {
-//     expect.assertions(12);
+// test('Create a Job and subsequently try to create it again', function(done) {
+//     expect.assertions(9);
 //
 //     let job = JSON.stringify({
-//         'startDate': new Date(0),
-//         'endDate': new Date(10),
+//         'startDate': '2013-01-01T00:00:00Z',
+//         'endDate': '2015-12-31T23:59:59Z',
 //         'algorithm': 'density',
 //         'aggregationLevel': 'region',
 //         'aggregationValue': 'Dakar',
@@ -92,67 +92,6 @@ test('Get Job No jobID', function(done) {
 //         }
 //     });
 //
-//     request(
-//         {
-//             method: 'POST',
-//             baseUrl: 'http://127.0.0.1:' + config.port,
-//             uri: '/job/create',
-//             json: true,
-//             body: {
-//                 opalUsername: adminUsername,
-//                 opalUserToken: adminPassword,
-//                 job: job
-//             }
-//         },
-//         function(error, response, body) {
-//             if (error) {
-//                 done.fail(error.toString());
-//             }
-//             console.log(response.body);
-//             expect(response).toBeDefined();
-//             expect(response.statusCode).toEqual(200);
-//             expect(body).toBeDefined();
-//             expect(body.status).toEqual('OK');
-//             expect(body.jobID).toBeDefined();
-//             request(
-//                 {
-//                     method: 'POST',
-//                     baseUrl: 'http://127.0.0.1:' + config.port,
-//                     uri: '/job',
-//                     json: true,
-//                     body: {
-//                         opalUsername: adminUsername,
-//                         opalUserToken: adminPassword,
-//                         jobID: body.jobID
-//                     }
-//                 }, function(error, response, body) {
-//                     if (error) {
-//                         done.fail(error.toString());
-//                     }
-//                     expect(response).toBeDefined();
-//                     expect(response.statusCode).toEqual(200);
-//                     expect(body).toBeDefined();
-//                     expect(body.algorithm).toEqual('density');
-//                     expect(body.requester).toEqual(adminUsername);
-//                     expect(body.statusLock).toEqual(false);
-//                     expect(body.exitCode).toEqual(-1);
-//                     done();
-//                 });
-//         }
-//     );
-// });
-//
-// test('Create a Job and subsequently try to create it again', function(done) {
-//     expect.assertions(9);
-//     let job = JSON.stringify({
-//         'startDate': new Date(0),
-//         'endDate': new Date(1),
-//         'algorithm': 'density',
-//         'params': {},
-//         'aggregationLevel': 'commune',
-//         'aggregationValue': 'Dakar',
-//         'sample': 0.1
-//     });
 //     request(
 //         {
 //             method: 'POST',
@@ -192,12 +131,77 @@ test('Get Job No jobID', function(done) {
 //                     expect(response).toBeDefined();
 //                     expect(response.statusCode).toEqual(200);
 //                     expect(body).toBeDefined();
-//                     expect(body.status).toEqual('Waiting');
+//                     expect(body.status).toEqual('The Job is being computed. The current status is: ' + eaeutils.Constants.EAE_JOB_STATUS_QUEUED);
 //                     done();
 //                 });
 //         }
 //     );
 // });
+
+// test('Create a Job and subsequently get it', function(done) {
+//     expect.assertions(12);
+//
+//     let job = JSON.stringify({
+//         'startDate': '2013-01-01T00:00:00Z',
+//         'endDate': '2015-12-31T23:59:59Z',
+//         'algorithm': 'density',
+//         'aggregationLevel': 'commune',
+//         'aggregationValue': 'Dakar',
+//         'sample': 0.1,
+//         'params': {
+//             first_window: new Date(0),
+//             second_window: new Date(10)
+//         }
+//     });
+//
+//     request(
+//         {
+//             method: 'POST',
+//             baseUrl: 'http://127.0.0.1:' + config.port,
+//             uri: '/job/create',
+//             json: true,
+//             body: {
+//                 opalUsername: adminUsername,
+//                 opalUserToken: adminPassword,
+//                 job: job
+//             }
+//         },
+//         function(error, response, body) {
+//             if (error) {
+//                 done.fail(error.toString());
+//             }
+//             expect(response).toBeDefined();
+//             expect(response.statusCode).toEqual(200);
+//             expect(body).toBeDefined();
+//             expect(body.status).toEqual('OK');
+//             expect(body.jobID).toBeDefined();
+//             request(
+//                 {
+//                     method: 'POST',
+//                     baseUrl: 'http://127.0.0.1:' + config.port,
+//                     uri: '/job',
+//                     json: true,
+//                     body: {
+//                         opalUsername: adminUsername,
+//                         opalUserToken: adminPassword,
+//                         job: body.jobID
+//                     }
+//                 }, function(error, response, body) {
+//                     if (error) {
+//                         done.fail(error.toString());
+//                     }
+//                     expect(response).toBeDefined();
+//                     expect(response.statusCode).toEqual(200);
+//                     expect(body).toBeDefined();
+//                     expect(body.requester).toEqual(adminUsername);
+//                     expect(body.statusLock).toEqual(false);
+//                     expect(body.exitCode).toEqual(-1);
+//                     done();
+//                 });
+//         }
+//     );
+// });
+
 //
 // test('Create a Job and subsequently cancel it', function(done) {
 //     expect.assertions(10);

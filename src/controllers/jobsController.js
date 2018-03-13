@@ -80,49 +80,49 @@ JobsController.prototype.createNewJob = function(req, res){
 
                 // Check users rights to execute the request
                 _this._jobsManagement.authorizeRequest(user, jobRequest).then(function(_unused__accessgranted) {
-                _this.cacheHelper.sendRequestToCache(newJob).then(function(body) {
-                    if (body.result) {
-                            // The query has been found with a result, return the result immediately
-                            res.status(200);
-                            res.json({status: 'OK', result: body.result});
-                        }
-                        else if (body.waiting) {
-                            // The query has already been submitted but the result is not ready yet, tell the user to wait
-                            res.status(200);
-                            res.json({status: 'The Job is being computed. The current status is: ' + body.status});
-                        }
-                        else {
-                            // The query has not been found, insert job in mongo so scheduler can execute it
-                            // Check if compute servers are alive
-                            _this._interfaceUtils.isBackendAlive().then(function(isAlive){
-                                if(isAlive){
-                                    _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                                        _this._jobsCollection.count().then(function (count) {
-                                            _this._accessLogger.logAuditAccess(opalRequest);
-                                            res.status(200);
-                                            res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
-                                        }, function (error) {
+                    _this.cacheHelper.sendRequestToCache(newJob).then(function(body) {
+                        if (body.result) {
+                                // The query has been found with a result, return the result immediately
+                                res.status(200);
+                                res.json({status: 'OK', result: body.result});
+                            }
+                            else if (body.waiting) {
+                                // The query has already been submitted but the result is not ready yet, tell the user to wait
+                                res.status(200);
+                                res.json({status: 'The Job is being computed. The current status is: ' + body.status});
+                            }
+                            else {
+                                // The query has not been found, insert job in mongo so scheduler can execute it
+                                // Check if compute servers are alive
+                                _this._interfaceUtils.isBackendAlive().then(function(isAlive){
+                                    if(isAlive){
+                                        _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
+                                            _this._jobsCollection.count().then(function (count) {
+                                                _this._accessLogger.logAuditAccess(opalRequest);
+                                                res.status(200);
+                                                res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
+                                            }, function (error) {
+                                                res.status(500);
+                                                res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                                            });
+                                        },function(error){
                                             res.status(500);
-                                            res.json(ErrorHelper('Job queued but couldn\'t assert the job\'s position for computation', error));
+                                            res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
                                         });
-                                    },function(error){
+                                    }
+                                    else{
                                         res.status(500);
-                                        res.json(ErrorHelper('Couldn\'t insert the job for computation', error));
-                                    });
-                                }
-                                else{
-                                    res.status(500);
-                                    res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
-                                }},
-                                function(error){
+                                        res.json(ErrorHelper('The computes servers are unavailable and results are not available in cache. Please contact Admin.'));
+                                    }
+                                },function(error){
                                     res.status(401);
                                     res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
                                 });
-                        }
-                    }, function(_unused__error) {
-                        res.status(500);
-                        res.json(ErrorHelper('The cache could not be contacted. Please contact Admin.'));
-                    });
+                            }
+                        }, function(_unused__error) {
+                            res.status(500);
+                            res.json(ErrorHelper('The cache could not be contacted. Please contact Admin.'));
+                        });
                 }, function(error){
                     res.status(401);
                     res.json(ErrorHelper('The requested level exceeds the user\'s rights.', error));
