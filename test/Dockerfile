@@ -23,3 +23,4 @@ COPY ./config/opal.interface.test.config.js /usr/app/config/opal.interface.test.
 COPY ./algorithms /usr/app/algorithms
 
 EXPOSE 80
+CMD [ "npm", "test"]

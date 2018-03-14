@@ -10,6 +10,17 @@ services:
         ports:
             - 27017:27017
 
+    cache:
+        image: emalgorithm/opalcache:latest
+        depends_on:
+            - mongodb
+        links:
+            - mongodb
+        ports:
+            - 8080:8080
+        volumes:
+            - ./opal.cache.config.js:/usr/app/config/opal.cache.config.js
+
     algoservice:
         image: aoehmich/opal-algoservice:latest
         depends_on:
@@ -27,9 +38,11 @@ services:
             dockerfile: ./test/Dockerfile
         depends_on:
             - mongodb
+            - cache
             - algoservice
         links:
             - mongodb
+            - cache
             - algoservice
         ports:
             - 80:80
