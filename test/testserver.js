@@ -72,9 +72,9 @@ TestServer.prototype.addAdminUser = function(username, password){
             type: interface_constants.USER_TYPE.admin,
             username : username,
             token: password,
-            defaultAccessLevel : "aggregation_level_1",
+            defaultAccessLevel : "location_level_1",
             authorizedAlgorithms : {
-                "density" : "aggregation_level_1"
+                "density" : "location_level_1"
             }
         };
         let adminUser = Object.assign({}, interface_models.USER_MODEL , admin);
