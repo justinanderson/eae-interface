@@ -7,8 +7,8 @@ const userTypes = {
 
 const accessLevels = {
   antenna: { text:'antenna' ,value: 4},
-  aggregation_level_1: { text:'aggregation_level_1' ,value: 3},
-  aggregation_level_2: { text:'aggregation_level_2' ,value: 2},
+  location_level_1: { text:'location_level_1' ,value: 3},
+  location_level_2: { text:'location_level_2' ,value: 2},
   cache_only: { text:'cache_only' ,value: 1},
   none: { text:'none' ,value: 0}
 };
