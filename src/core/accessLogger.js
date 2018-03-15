@@ -1,6 +1,7 @@
 const { interface_models } = require('../core/models.js');
 const { ErrorHelper } = require('eae-utils');
 const fs = require('fs');
+const util = require('util');
 
 /**
  * @fn AccessLogger
@@ -58,16 +59,15 @@ AccessLogger.prototype.logRequest = function(opalRequest){
     try {
         // write the request to the global file and to the monthly one
         let date = new Date();
-        let globalFileName = 'ALL_opal_audit_log.log';
-        let monthlyFileName = date.getMonth() + '.' + date.getFullYear() + '_opal_audit_log.log';
-        // eslint-disable-next-line quotes
-        let data = "{0}{1}".format(opalRequest.requester, JSON.stringify(opalRequest.params));
+        let globalFileName = 'ALL_opal_audit.log';
+        let monthlyFileName = date.getMonth() + 1 + '.' + date.getFullYear() + '_opal_audit.log';
+        let data = util.format('Requester:%s Parameters:%s',opalRequest.requester, JSON.stringify(opalRequest.params));
 
-        fs.appendFile(_this._auditDirectory + globalFileName, data, 'utf8', (err) => {
+        fs.appendFile(_this._auditDirectory + '/' + globalFileName, data, 'utf8', (err) => {
             if (err) throw err;
         });
 
-        fs.appendFile(_this._auditDirectory + monthlyFileName, data, 'utf8', (err) => {
+        fs.appendFile(_this._auditDirectory + '/' + monthlyFileName, data, 'utf8', (err) => {
             if (err) throw err;
         });
     }catch(error){
