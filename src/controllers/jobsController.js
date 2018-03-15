@@ -75,7 +75,6 @@ JobsController.prototype.createNewJob = function(req, res){
                 let newJob = Object.assign({}, eaeJobModel, opalRequest, {_id: new ObjectID(), type: Constants.EAE_JOB_TYPE_PYTHON2});
 
                 // In opal there is no data transfer step so we move directly to queued
-                newJob.status.unshift(Constants.EAE_JOB_STATUS_TRANSFERRING_DATA);
                 newJob.status.unshift(Constants.EAE_JOB_STATUS_QUEUED);
 
                 // Check users rights to execute the request
