@@ -62,12 +62,12 @@ JobsManagement.prototype.checkFields = function(jobRequest){
 
         _this._algoHelper.validate(coreFields, 'core').then(function() {
             if (!enabledAlgorithms.hasOwnProperty(coreFields.algorithmName)) {
-                reject(ErrorHelper('The selected algorithm ' + coreFields.algorithm + ' is not enabled'));
+                reject(ErrorHelper('The selected algorithm ' + coreFields.algorithmName + ' is not enabled'));
                 return;
             }
             _this._algoHelper.validate(params, coreFields.algorithmName).then(function(){
                 _this._algoHelper.getListOfAlgos().then(function(authorized_algorithms) {
-                    if (!authorized_algorithms.hasOwnProperty(coreFields.algorithm)) {
+                    if (!authorized_algorithms.hasOwnProperty(coreFields.algorithmName)) {
                         reject(ErrorHelper('The algorithm service does not contain the requested algorithm: ' +
                             coreFields.algorithmName + ' . Please contact the admin to add it.'));
                     }
@@ -90,8 +90,8 @@ JobsManagement.prototype.checkFields = function(jobRequest){
  * @returns {Promise}
  */
 JobsManagement.prototype.authorizeRequest = function(user, jobRequest) {
-    let requestedAccessLevel = jobRequest.aggregationLevel;
-    let requestedAlgorithm = jobRequest.algorithm;
+    let requestedAccessLevel = jobRequest.accessLevel;
+    let requestedAlgorithm = jobRequest.algorithmName;
 
     return new Promise(function (resolve, reject) {
         // We first check the more granular rights and exceptions
