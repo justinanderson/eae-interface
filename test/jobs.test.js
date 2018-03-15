@@ -82,8 +82,8 @@ test('Get Job No jobID', function(done) {
 //     let job = JSON.stringify({
 //         'startDate': '2013-01-01T00:00:00Z',
 //         'endDate': '2015-12-31T23:59:59Z',
-//         'algorithm': 'density',
-//         'aggregationLevel': 'region',
+//         'algorithmName': 'density',
+//         'accessLevel': 'region',
 //         'aggregationValue': 'Dakar',
 //         'sample': 0.1,
 //         'params': {
@@ -144,8 +144,8 @@ test('Get Job No jobID', function(done) {
 //     let job = JSON.stringify({
 //         'startDate': '2013-01-01T00:00:00Z',
 //         'endDate': '2015-12-31T23:59:59Z',
-//         'algorithm': 'density',
-//         'aggregationLevel': 'commune',
+//         'algorithmName': 'density',
+//         'accessLevel': 'commune',
 //         'aggregationValue': 'Dakar',
 //         'sample': 0.1,
 //         'params': {
@@ -208,9 +208,9 @@ test('Get Job No jobID', function(done) {
 //     let job = JSON.stringify({
 //         'startDate': new Date(0),
 //         'endDate': new Date(15),
-//         'algorithm': 'density',
+//         'algorithmName': 'density',
 //         'params': {},
-//         'aggregationLevel': 'region',
+//         'accessLevel': 'region',
 //         'aggregationValue': 'Dakar',
 //         'sample': 0.1
 //     });
