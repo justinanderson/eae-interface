@@ -83,8 +83,8 @@ test('Get Job No jobID', function(done) {
 //         'startDate': '2013-01-01T00:00:00Z',
 //         'endDate': '2015-12-31T23:59:59Z',
 //         'algorithmName': 'density',
-//         'accessLevel': 'region',
-//         'aggregationValue': 'Dakar',
+//         'resolution': 'region',
+//         'keySelector': 'Dakar',
 //         'sample': 0.1,
 //         'params': {
 //             first_window: new Date(0),
@@ -145,8 +145,8 @@ test('Get Job No jobID', function(done) {
 //         'startDate': '2013-01-01T00:00:00Z',
 //         'endDate': '2015-12-31T23:59:59Z',
 //         'algorithmName': 'density',
-//         'accessLevel': 'commune',
-//         'aggregationValue': 'Dakar',
+//         'resolution': 'commune',
+//         'keySelector': 'Dakar',
 //         'sample': 0.1,
 //         'params': {
 //             first_window: new Date(0),
@@ -210,8 +210,8 @@ test('Get Job No jobID', function(done) {
 //         'endDate': new Date(15),
 //         'algorithmName': 'density',
 //         'params': {},
-//         'accessLevel': 'region',
-//         'aggregationValue': 'Dakar',
+//         'resolution': 'region',
+//         'keySelector': 'Dakar',
 //         'sample': 0.1
 //     });
 //     request(

@@ -90,7 +90,7 @@ JobsManagement.prototype.checkFields = function(jobRequest){
  * @returns {Promise}
  */
 JobsManagement.prototype.authorizeRequest = function(user, jobRequest) {
-    let requestedAccessLevel = jobRequest.accessLevel;
+    let requestedAccessLevel = jobRequest.resolution;
     let requestedAlgorithm = jobRequest.algorithmName;
 
     return new Promise(function (resolve, reject) {
