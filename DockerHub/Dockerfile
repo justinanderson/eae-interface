@@ -15,7 +15,8 @@ WORKDIR /root/opal-interface
 
 # Bundle app
 RUN cp package.json /usr/app/ \
-   && cp -r src /usr/app/src
+   && cp -r src /usr/app/src \
+   && cp -r algorithms /usr/app/algorithms
 
 WORKDIR /usr/app
 
