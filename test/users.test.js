@@ -279,8 +279,7 @@ test('Get All Admin Users', function(done) {
             uri: '/user/getAll',
             json: true,
             body: {
-                eaeUsername: adminUsername,
-                eaeUserToken: adminPassword,
+                opalUserToken: adminPassword,
                 userType: 'admin'     //the defined usertype is 'ADMIN' but API converts input userType to uppercase automatically
 
             }
