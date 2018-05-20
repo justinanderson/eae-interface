@@ -144,8 +144,8 @@ test('Get All standard Users (when there is none)', function(done) {
             uri: '/user/getAll',
             json: true,
             body: {
-                eaeUsername: adminUsername,
-                eaeUserToken: adminPassword,
+                opalUsername: adminUsername,
+                opalUserToken: adminPassword,
                 userType: 'STANDARD'
             }
         },
@@ -253,7 +253,7 @@ test('Get All Users', function(done) {
             uri: '/user/getAll',
             json: true,
             body: {
-                eaeUsername: adminUsername,
+                opalUsername: adminUsername,
                 eaeUserToken: adminPassword,
                 userType: 'all'    //should be 'ALL' but API converts input userType to uppercase automatically
             }
@@ -306,8 +306,8 @@ test('Get All standard Users', function(done) {
             uri: '/user/getAll',
             json: true,
             body: {
-                eaeUsername: adminUsername,
-                eaeUserToken: adminPassword,
+                opalUsername: adminUsername,
+                opalUserToken: adminPassword,
                 userType: 'STANDARD'
             }
         },
