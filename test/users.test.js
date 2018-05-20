@@ -254,7 +254,7 @@ test('Get All Users', function(done) {
             json: true,
             body: {
                 opalUsername: adminUsername,
-                eaeUserToken: adminPassword,
+                opalUserToken: adminPassword,
                 userType: 'all'    //should be 'ALL' but API converts input userType to uppercase automatically
             }
         },
