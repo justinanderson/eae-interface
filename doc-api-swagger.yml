@@ -21,10 +21,10 @@ paths:
                 type: string
                 description: MUST be one of EAE_SERVICE_STATUS_XXX
                 example: eae_service_idle
-                
+
   /specs:
     get:
-      description: Detailed status report. Part of the standard API for eae components
+      description: Detailed status report. Part of the standard API for OPAL components
       responses:
         '200':
           description: desc
@@ -115,7 +115,7 @@ paths:
 
   /job/create:
     post:
-      description: Creates a new job to be computed on the eAE
+      description: Creates a new job to be computed on the OPAL platform
       consumes:
         - application/json
         - application/x-www-form-urlencoded
@@ -270,7 +270,7 @@ paths:
           schema:
             type: object
             description: eAE ErrorStack tracking the error origin
-            
+
   /servicesStatus:
     post:
       description: >-
@@ -313,7 +313,7 @@ paths:
           schema:
             type: object
             description: eAE ErrorStack tracking the error origin
-            
+
   /user:
     post:
       description: Sends back the profile of the requested user. By admin only
@@ -362,7 +362,7 @@ paths:
   /user/getAll:
     post:
       description: Sends back the name of all users of specified type. By admin only
-      consumes: 
+      consumes:
         - application/json
         - application/x-www-form-urlencoded
       parameters:
@@ -372,8 +372,7 @@ paths:
           schema:
             type: object
             required:
-              - eaeUsername
-              - eaeUserToken
+              - opalUserToken
               - userType
             properties:
               opalUsername:
@@ -383,8 +382,7 @@ paths:
               userType:
                 type: string
             example:
-              eaeUsername: admin
-              eaeUserToken: admin
+              opalUserToken: qwerty1234
               userType: STANDARD
       responses:
         '200':
@@ -406,7 +404,7 @@ paths:
           schema:
             type: object
             description: eAE ErrorStack tracking the error origin
-  
+
   /user/create:
     post:
       description: Create a new user to get access to the platform. By admin only
@@ -508,7 +506,7 @@ definitions:
     properties:
       type:
         type: string
-        description: Type of the eae service
+        description: Type of the OPAL service
       status:
         type: string
         description: Current status of the service. Defaults to 'eae_service_idle'
@@ -604,7 +602,7 @@ definitions:
         description: Unique identifier
       type:
         type: string
-        description: 'Job type definition, MUST be oneof EAE_JOB_TYPE_XXX'
+        description: 'Job type definition, MUST be one of EAE_JOB_TYPE_XXX'
       status:
         type: array
         description: History of jobs states

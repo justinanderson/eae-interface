@@ -94,7 +94,7 @@ UsersController.prototype.getUser = function(req, res){
  */
 UsersController.prototype.getAllUsers = function(req, res){
     let _this = this;
-    let userToken = req.body.eaeUserToken;
+    let userToken = req.body.opalUserToken;
     let userType = req.body.userType.toUpperCase();
 
     if (userToken === null || userToken === undefined) {
