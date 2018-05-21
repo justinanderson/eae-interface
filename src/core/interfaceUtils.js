@@ -53,7 +53,7 @@ InterfaceUtils.prototype.isBackendAlive = function() {
         let backendServices = {};
         _this.config.statusCollection.find(filter).toArray().then(function(docs) {
                 docs.forEach(function (node) {
-                    backendServices[node.computeType] += 1;
+                    backendServices[node.type] += 1;
                 });
                 let keys = Object.keys(backendServices);
                 if(keys.length === 2){
