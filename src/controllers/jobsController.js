@@ -68,7 +68,9 @@ JobsController.prototype.createNewJob = function(req, res){
                 // Build the job to be inserted for the scheduler
                 let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
 
-                // We need to reformat the OPAL job request to feat the eAE's one
+                // We need to reformat the OPAL job request to fit the eAE's one
+                jobRequest.startDate = new Date(jobRequest.startDate);
+                jobRequest.endDate = new Date(jobRequest.endDate);
                 let opalRequest = {params: jobRequest, requester: user.username};
 
                 // We merge all those parameters to make the final job

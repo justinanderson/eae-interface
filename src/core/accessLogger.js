@@ -88,7 +88,8 @@ AccessLogger.prototype.dumpPrivateLog = function(logType,numberOfRecords){
 
     new Promise(function (resolve, reject) {
         // write the request to the global file and to the monthly one
-        let filename = date.getDay() + '.' + date.getMonth() + '.' + date.getFullYear() + '_opal_' + logType + '_log.log';
+        let filename = _this._auditDirectory + '/' + date.getDay() + 1 + '.' + date.getMonth() + 1 + '.'
+                        + date.getFullYear() + '_opal_' + logType + '_log.log';
         let collection = null;
 
         switch (logType) {
