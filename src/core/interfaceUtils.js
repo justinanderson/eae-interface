@@ -56,6 +56,7 @@ InterfaceUtils.prototype.isBackendAlive = function() {
                     backendServices[node.computeType] += 1;
                 });
                 let keys = Object.keys(backendServices);
+                console.log(keys); // eslint-disable-line no-console
                 if(keys.length === 2){
                     resolve(true);
                 }else{
