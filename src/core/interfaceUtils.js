@@ -43,7 +43,7 @@ InterfaceUtils.prototype.isBackendAlive = function() {
         time.setHours(time.getMinutes() - 5);
         let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER];
         let filter = {
-            computeType: {$in: types},
+            type: {$in: types},
             lastUpdate: {
                 '$gte': new Date(0),
                 '$lt': time
