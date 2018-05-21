@@ -88,7 +88,7 @@ UsersController.prototype.getUser = function(req, res){
 
 /**
  * @fn getAllUsers
- * @desc Sends back the profile of the requested user
+ * @desc Sends back the profile of all the users
  * @param req Incoming message
  * @param res Server Response
  */
