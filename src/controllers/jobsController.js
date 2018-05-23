@@ -98,7 +98,11 @@ JobsController.prototype.createNewJob = function(req, res){
                                 _this._interfaceUtils.isBackendAlive().then(function(isAlive){
                                     if(isAlive){
                                         _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                                            _this._jobsCollection.count().then(function (count) {
+                                            let statuses = [Constants.EAE_JOB_STATUS_CREATED,Constants.EAE_JOB_STATUS_QUEUED,
+                                                Constants.EAE_JOB_STATUS_SCHEDULED, Constants.EAE_JOB_STATUS_TRANSFERRING_DATA,
+                                                Constants.EAE_JOB_STATUS_RUNNING];
+                                            let filter = {'status.0': {$in: statuses}};
+                                            _this._jobsCollection.count(filter).then(function (count) {
                                                 _this._accessLogger.logRequest(opalRequest);
                                                 res.status(200);
                                                 res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});
