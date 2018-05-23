@@ -40,13 +40,13 @@ InterfaceUtils.prototype.isBackendAlive = function() {
     let _this = this;
 
     return new Promise(function (resolve, reject) {
-        let time = new Date();
-        time.setHours(time.getMinutes() - 10);
+        let currentTime = new Date().getTime();
+        let aliveTime =  new Date(currentTime - 600000); // 10 minutes
         let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER, Constants_Opal.OPAL_SERVICE_TYPE_PRIVACY];
         let filter = {
             type: {$in: types},
             lastUpdate: {
-                '$gte': time
+                '$gte': aliveTime
             }
         };
 
