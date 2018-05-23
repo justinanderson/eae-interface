@@ -41,13 +41,12 @@ InterfaceUtils.prototype.isBackendAlive = function() {
 
     return new Promise(function (resolve, reject) {
         let time = new Date();
-        time.setHours(time.getMinutes() - 5);
+        time.setHours(time.getMinutes() - 10);
         let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER, Constants_Opal.OPAL_SERVICE_TYPE_PRIVACY];
         let filter = {
             type: {$in: types},
             lastUpdate: {
-                '$gte': new Date(0),
-                '$lt': time
+                '$gte': time
             }
         };
 
