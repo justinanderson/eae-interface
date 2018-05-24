@@ -71,6 +71,9 @@ JobsController.prototype.createNewJob = function(req, res){
                 // We need to reformat the OPAL job request to fit the eAE's one
                 jobRequest.startDate = new Date(jobRequest.startDate);
                 jobRequest.endDate = new Date(jobRequest.endDate);
+                if(jobRequest.keySelector.length === 0 || jobRequest.keySelector === undefined || jobRequest.keySelector === null){
+                    jobRequest.keySelector = null;
+                }
                 let opalRequest = {params: jobRequest, requester: user.username};
 
                 // We merge all those parameters to make the final job
