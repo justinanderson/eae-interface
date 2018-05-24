@@ -61,7 +61,7 @@ AccessLogger.prototype.logRequest = function(opalRequest){
         let date = new Date();
         let globalFileName = 'ALL_opal_audit.log';
         let monthlyFileName = date.getMonth() + 1 + '.' + date.getFullYear() + '_opal_audit.log';
-        let data = util.format('Requester:%s Parameters:%s',opalRequest.requester, JSON.stringify(opalRequest.params));
+        let data = util.format('Requester:%s Parameters:%s \n',opalRequest.requester, JSON.stringify(opalRequest.params));
 
         fs.appendFile(_this._auditDirectory + '/' + globalFileName, data, 'utf8', (err) => {
             if (err) throw err;
