@@ -6,5 +6,6 @@ module.exports = {
     cacheURL: 'http://cache:8080',
     algoServiceURL: 'http://algoservice:3001',
     algorithmsDirectory: '/usr/app/algorithms',
-    auditDirectory: '/usr/app/audit'
+    auditDirectory: '/usr/app/audit',
+    bcryptSaltRounds:14
 };

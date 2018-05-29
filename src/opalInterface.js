@@ -157,7 +157,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
                                                     _this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                     _this.accessLogger, _this.algoHelper, _this.cacheHelper);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
-                                                      _this.accessLogger, _this.algoHelper);
+                                                      _this.accessLogger, _this.algoHelper, global.opal_interface_config.bcryptSaltRounds);
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                           _this.db.collection(Constants.EAE_COLLECTION_USERS),
                                                           _this.accessLogger);

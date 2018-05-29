@@ -1,7 +1,7 @@
 // const { interface_models, interface_constants } = require('../core/models.js');
 const { ErrorHelper } = require('eae-utils');
 const { interface_constants } = require('../core/models.js');
-
+const bcrypt = require('bcrypt');
 
 /**
  * @fn UsersManagement
@@ -9,13 +9,15 @@ const { interface_constants } = require('../core/models.js');
  * @params usersCollection Collection containing all the platform users
  * @params algorithmHelper Helper to interact with the algo service
  * @params interfaceUtils Interface utils
+ * @saltRounds Number of rounds for the bcrypt algorithm
  * @constructor
  */
-function UsersManagement(usersCollection, algorithmHelper, interfaceUtils) {
+function UsersManagement(usersCollection, algorithmHelper, interfaceUtils, saltRounds ) {
     let _this = this;
     _this._usersCollection = usersCollection;
     _this._algoHelper = algorithmHelper;
     _this.utils = interfaceUtils;
+    _this.saltRounds = saltRounds;
 
     // Bind member functions
     this.validateUserAndInsert = UsersManagement.prototype.validateUserAndInsert.bind(this);
@@ -108,7 +110,10 @@ UsersManagement.prototype.resetPassword = function (user){
     return new Promise(function (resolve, reject) {
         let filter = { username : user.username};
         let newPassword = _this.utils.generateToken(user);
-        let updatedUser =  Object.assign({}, user, {token: newPassword});
+        bcrypt.hash(newPassword, saltRounds).then(function(hash) {
+            // Store hash in your password DB.
+        });
+        let updatedUser =  Object.assign({}, user, {token: newHashedPassword});
 
         _this._usersCollection.findOneAndUpdate(filter,
             {$set: updatedUser},

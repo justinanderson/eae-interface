@@ -9,14 +9,15 @@ const UsersManagement = require('../core/usersManagement.js');
  * @param usersCollection
  * @param accessLogger
  * @param algorithmHelper
+ * @param saltRounds
  * @constructor
  */
-function UsersController(usersCollection, accessLogger, algorithmHelper) {
+function UsersController(usersCollection, accessLogger, algorithmHelper, saltRounds) {
     let _this = this;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
     _this.utils = new InterfaceUtils();
-    _this.usersManagement = new UsersManagement(usersCollection, algorithmHelper, _this.utils);
+    _this.usersManagement = new UsersManagement(usersCollection, algorithmHelper, _this.utils, saltRounds);
 
     // Bind member functions
     _this.getUser = UsersController.prototype.getUser.bind(this);
