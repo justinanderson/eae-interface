@@ -61,7 +61,7 @@ AccessLogger.prototype.logRequest = function(opalRequest){
         let date = new Date();
         let globalFileName = 'ALL_opal_audit.log';
         let monthlyFileName = date.getMonth() + 1 + '.' + date.getFullYear() + '_opal_audit.log';
-        let data = util.format('Requester:%s Parameters:%s',opalRequest.requester, JSON.stringify(opalRequest.params));
+        let data = util.format('Requester:%s Parameters:%s \n',opalRequest.requester, JSON.stringify(opalRequest.params));
 
         fs.appendFile(_this._auditDirectory + '/' + globalFileName, data, 'utf8', (err) => {
             if (err) throw err;
@@ -86,11 +86,20 @@ AccessLogger.prototype.dumpPrivateLog = function(logType,numberOfRecords){
     let _this = this;
     let date = new Date();
 
-    new Promise(function (resolve, reject) {
+    return new Promise(function (resolve, reject) {
         // write the request to the global file and to the monthly one
-        let filename = date.getDay() + '.' + date.getMonth() + '.' + date.getFullYear() + '_opal_' + logType + '_log.log';
+        let month = date.getMonth() + 1;
+        let day = date.getDate();
+        let filename = _this._auditDirectory + '/' + day + '.' + month + '.'
+                        + date.getFullYear() + '_opal_' + logType + '_log.log';
         let collection = null;
-
+        if (fs.existsSync(filename)) {
+            try {
+                fs.unlinkSync(filename);
+            }catch(err){
+                reject(ErrorHelper('Log file already exists and couldn\'t be deleted: ' + err));
+            }
+        }
         switch (logType) {
             case 'illegal':
                 collection = _this._illegalAccessLogCollection;
@@ -104,17 +113,22 @@ AccessLogger.prototype.dumpPrivateLog = function(logType,numberOfRecords){
         }
         collection.find().limit(numberOfRecords).toArray(
             function (err, result) {
-                if (err) throw reject(ErrorHelper('Error when creating the file for the log',err));
-                let file = fs.createWriteStream(filename);
-                file.on('error', function (err) {
-                    throw err;
-                });
-                result.forEach(function (v) {
-                    file.write(JSON.stringify(v) + '\n');
-                });
-                file.end();
+                if (err) throw reject(ErrorHelper('Error when creating the file for the log', err));
+                let fd;
+                try{
+                    fd = fs.openSync(filename,'a');
+                    fs.appendFileSync(fd,'Logs:\n','utf8');
+                    result.forEach(function (v) {
+                        fs.appendFileSync(fd,JSON.stringify(v) + '\n', 'utf8');
+                    });
+                }catch(err){
+                    reject(ErrorHelper('New log file could not be created: ' + err));
+                }finally {
+                    if (fd !== undefined)
+                        fs.closeSync(fd);
+                    resolve(filename);
+                }
             });
-        resolve(filename);
     });
 };
 

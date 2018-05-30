@@ -63,7 +63,12 @@ JobsController.prototype.createNewJob = function(req, res){
                 // Build the job to be inserted for the scheduler
                 let eaeJobModel = JSON.parse(JSON.stringify(DataModels.EAE_JOB_MODEL));
 
-                // We need to reformat the OPAL job request to feat the eAE's one
+                // We need to reformat the OPAL job request to fit the eAE's one
+                jobRequest.startDate = new Date(jobRequest.startDate);
+                jobRequest.endDate = new Date(jobRequest.endDate);
+                if(jobRequest.keySelector === undefined || jobRequest.keySelector === null || jobRequest.keySelector.length === 0){
+                    jobRequest.keySelector = null;
+                }
                 let opalRequest = {params: jobRequest, requester: user.username};
 
                 // We merge all those parameters to make the final job
@@ -91,7 +96,11 @@ JobsController.prototype.createNewJob = function(req, res){
                                 _this._interfaceUtils.isBackendAlive().then(function(isAlive){
                                     if(isAlive){
                                         _this._jobsCollection.insertOne(newJob).then(function (_unused__result) {
-                                            _this._jobsCollection.count().then(function (count) {
+                                            let statuses = [Constants.EAE_JOB_STATUS_CREATED,Constants.EAE_JOB_STATUS_QUEUED,
+                                                Constants.EAE_JOB_STATUS_SCHEDULED, Constants.EAE_JOB_STATUS_TRANSFERRING_DATA,
+                                                Constants.EAE_JOB_STATUS_RUNNING];
+                                            let filter = {'status.0': {$in: statuses}};
+                                            _this._jobsCollection.count(filter).then(function (count) {
                                                 _this._accessLogger.logRequest(opalRequest);
                                                 res.status(200);
                                                 res.json({status: 'OK', jobID: newJob._id.toString(), jobPosition: count});

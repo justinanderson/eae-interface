@@ -84,13 +84,13 @@ UsersController.prototype.getUser = function(req, res){
 
 /**
  * @fn getAllUsers
- * @desc Sends back the profile of the requested user
+ * @desc Sends back the profile of all the users
  * @param req Incoming message
  * @param res Server Response
  */
 UsersController.prototype.getAllUsers = function(req, res){
     let _this = this;
-    let userToken = req.body.eaeUserToken;
+    let userToken = req.body.opalUserToken;
     let userType = req.body.userType.toUpperCase();
 
     if (userToken === null || userToken === undefined) {

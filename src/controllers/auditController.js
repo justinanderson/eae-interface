@@ -54,7 +54,7 @@ AuditController.prototype.getPublicAudit = function(req, res) {
 
 /**
  * @fn getPrivateAudit
- * @desc HTTP method GET handler to serve the private audit. ADMIN only.
+ * @desc HTTP method POST handler to serve the private audit. ADMIN only.
  * Serves all illegal access logged in Mongo.
  * @param req Express.js request object
  * @param res Express.js response object

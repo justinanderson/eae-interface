@@ -1,5 +1,6 @@
 let crypto = require('crypto');
 const { ErrorHelper, Constants } = require('eae-utils');
+const { Constants_Opal } = require('opal-utils');
 
 /**
  * @fn InterfaceUtils
@@ -39,24 +40,23 @@ InterfaceUtils.prototype.isBackendAlive = function() {
     let _this = this;
 
     return new Promise(function (resolve, reject) {
-        let time = new Date();
-        time.setHours(time.getMinutes() - 5);
-        let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER];
+        let currentTime = new Date().getTime();
+        let aliveTime =  new Date(currentTime - 600000); // 10 minutes
+        let types = [Constants.EAE_SERVICE_TYPE_COMPUTE, Constants.EAE_SERVICE_TYPE_SCHEDULER, Constants_Opal.OPAL_SERVICE_TYPE_PRIVACY];
         let filter = {
-            computeType: {$in: types},
+            type: {$in: types},
             lastUpdate: {
-                '$gte': new Date(0),
-                '$lt': time
+                '$gte': aliveTime
             }
         };
 
         let backendServices = {};
         _this.config.statusCollection.find(filter).toArray().then(function(docs) {
                 docs.forEach(function (node) {
-                    backendServices[node.computeType] += 1;
+                    backendServices[node.type] += 1;
                 });
                 let keys = Object.keys(backendServices);
-                if(keys.length === 2){
+                if(keys.length === 3){
                     resolve(true);
                 }else{
                     resolve(false);

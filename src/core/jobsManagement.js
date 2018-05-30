@@ -96,16 +96,16 @@ JobsManagement.prototype.authorizeRequest = function(user, jobRequest) {
     return new Promise(function (resolve, reject) {
         // We first check the more granular rights and exceptions
         if(user.authorizedAlgorithms.hasOwnProperty(requestedAlgorithm)){
-            if(user.authorizedAlgorithms[requestedAlgorithm].value < interface_constants.ACCESS_LEVELS[requestedAccessLevel].value){
+            if(interface_constants.ACCESS_LEVELS[user.authorizedAlgorithms[requestedAlgorithm]].value < interface_constants.ACCESS_LEVELS[requestedAccessLevel].value){
                 reject(ErrorHelper('The request is rejected because the user has insufficient rights. User\'s Access level: '
-                    + user.authorizedAlgorithms[requestedAlgorithm].text));
+                    + user.authorizedAlgorithms[requestedAlgorithm]));
             }else{
              resolve(true);
             }
         }else{
             if(interface_constants.ACCESS_LEVELS[user.defaultAccessLevel].value < interface_constants.ACCESS_LEVELS[requestedAccessLevel].value){
                 reject(ErrorHelper('The request is rejected because the user has insufficient rights. Default access is: '
-                    + interface_constants.ACCESS_LEVELS[requestedAccessLevel].text));
+                    + interface_constants.ACCESS_LEVELS[requestedAccessLevel]));
             }else{
                 resolve(true);
             }
