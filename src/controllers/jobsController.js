@@ -8,19 +8,19 @@ const InterfaceUtils = require('../core/interfaceUtils.js');
  * @fn JobsController
  * @desc Controller to manage the jobs service
  * @param jobsCollection
- * @param usersCollection
+ * @param usersManagement
  * @param statusCollection
  * @param accessLogger
  * @param algoHelper
  * @param cacheHelper
  * @constructor
  */
-function JobsController(jobsCollection, usersCollection, statusCollection, accessLogger, algoHelper, cacheHelper) {
+function JobsController(jobsCollection, usersManagement, statusCollection, accessLogger, algoHelper, cacheHelper) {
     let _this = this;
-    _this.cacheHelper = cacheHelper;
     _this._jobsCollection = jobsCollection;
-    _this._usersCollection = usersCollection;
+    _this.usersManagement = usersManagement;
     _this._accessLogger = accessLogger;
+    _this.cacheHelper = cacheHelper;
     _this._jobsManagement = new JobsManagement(_this._jobsCollection, algoHelper);
     _this._interfaceUtils = new InterfaceUtils({statusCollection:statusCollection});
 
@@ -29,7 +29,6 @@ function JobsController(jobsCollection, usersCollection, statusCollection, acces
     _this.getJob = JobsController.prototype.getJob.bind(this);
     _this.getAllJobs = JobsController.prototype.getAllJobs.bind(this);
     _this.cancelJob = JobsController.prototype.cancelJob.bind(this);
-    // _this.getJobResults = JobsController.prototype.getJobResults.bind(this);
 }
 
 /**
@@ -53,11 +52,7 @@ JobsController.prototype.createNewJob = function(req, res){
         let jobRequest = JSON.parse(req.body.job);
 
         _this._jobsManagement.checkFields(jobRequest).then(function(_unused__check) {
-            let filter = {
-                token: userToken
-            };
-
-            _this._usersCollection.findOne(filter).then(function (user) {
+            _this.usersManagement.checkPassword(userToken).then(function (user) {
                 if (user === null) {
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -166,10 +161,7 @@ JobsController.prototype.getJob = function(req, res){
                 _this._accessLogger.logIllegalAccess(req);
                 return;
             }else{
-                let filter = {
-                    token: userToken
-                };
-                _this._usersCollection.findOne(filter).then(function (user) {
+                _this.usersManagement.checkPassword(userToken).then(function (user) {
                     if (user === null) {
                         res.status(401);
                         res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -219,11 +211,7 @@ JobsController.prototype.getAllJobs = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -291,10 +279,7 @@ JobsController.prototype.cancelJob = function(req, res) {
                         job.status[0] === Constants.EAE_JOB_STATUS_RUNNING ||
                         job.status[0] === Constants.EAE_JOB_STATUS_ERROR
                     ){
-                        let filter = {
-                            token: userToken
-                        };
-                        _this._usersCollection.findOne(filter).then(function (user) {
+                        _this.usersManagement.checkPassword(userToken).then(function (user) {
                             if (user === null) {
                                 res.status(401);
                                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));

@@ -7,13 +7,13 @@ const fs = require('fs');
  * @desc Controller to manage the audit and logging of the platform
  * @param accessLogger Helper class to log the requests
  * @param auditDirectory Directory containing the log files
- * @param usersCollection
+ * @param usersManagement Helper for the management of users
  * @constructor
  */
-function AuditController(accessLogger, auditDirectory, usersCollection) {
+function AuditController(accessLogger, auditDirectory, usersManagement) {
     this._accessLogger = accessLogger;
     this._auditDirectory = auditDirectory;
-    this._usersCollection = usersCollection;
+    this.usersManagement = usersManagement;
 
     // Bind member functions
     this.getPublicAudit = AuditController.prototype.getPublicAudit.bind(this);
@@ -71,10 +71,7 @@ AuditController.prototype.getPrivateAudit = function(req, res) {
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));

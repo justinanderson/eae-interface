@@ -1,23 +1,21 @@
 const { interface_models, interface_constants } = require('../core/models.js');
 const { ErrorHelper } = require('eae-utils');
 const InterfaceUtils = require('../core/interfaceUtils.js');
-const UsersManagement = require('../core/usersManagement.js');
 
 /**
  * @fn UsersController
  * @desc Controller to manage the users service
  * @param usersCollection
  * @param accessLogger
- * @param algorithmHelper
- * @param saltRounds
+ * @param userManagement
  * @constructor
  */
-function UsersController(usersCollection, accessLogger, algorithmHelper, saltRounds) {
+function UsersController(usersCollection, accessLogger, userManagement) {
     let _this = this;
     _this._usersCollection = usersCollection;
     _this._accessLogger = accessLogger;
     _this.utils = new InterfaceUtils();
-    _this.usersManagement = new UsersManagement(usersCollection, algorithmHelper, _this.utils, saltRounds);
+    _this.usersManagement = userManagement;
 
     // Bind member functions
     _this.getUser = UsersController.prototype.getUser.bind(this);
@@ -47,10 +45,7 @@ UsersController.prototype.getUser = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -104,10 +99,7 @@ UsersController.prototype.getAllUsers = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -166,10 +158,7 @@ UsersController.prototype.createUser = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -235,10 +224,7 @@ UsersController.prototype.updateUser = function(req, res) {
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -297,10 +283,7 @@ UsersController.prototype.resetUserPassword = function(req, res) {
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
@@ -358,10 +341,7 @@ UsersController.prototype.deleteUser = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
             if (user === null) {
                 res.status(401);
                 res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));

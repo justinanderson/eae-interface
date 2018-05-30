@@ -6,14 +6,14 @@ const Cluster = require('../core/cluster.js');
  * @fn ClusterController
  * @desc Controller to manage the cluster service
  * @param statusCollection
- * @param usersCollection
+ * @param usersManagement
  * @param accessLogger
  * @constructor
  */
-function ClusterController(statusCollection, usersCollection, accessLogger) {
+function ClusterController(statusCollection, usersManagement, accessLogger) {
     let _this = this;
     _this._statusCollection = statusCollection;
-    _this._usersCollection = usersCollection;
+    _this.usersManagement = usersManagement;
     _this._accessLogger = accessLogger;
 
     // Bind member functions
@@ -36,10 +36,7 @@ ClusterController.prototype.getServicesStatus = function(req, res){
         return;
     }
     try {
-        let filter = {
-            token: userToken
-        };
-        _this._usersCollection.findOne(filter).then(function (user) {
+        _this.usersManagement.checkPassword(userToken).then(function (user) {
                 if(user === null){
                     res.status(401);
                     res.json(ErrorHelper('Unauthorized access. The unauthorized access has been logged.'));
