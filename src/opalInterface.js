@@ -150,7 +150,7 @@ OpalInterface.prototype._setupStatusController = function () {
 OpalInterface.prototype._setupInterfaceControllers = function() {
     let _this = this;
     let usersManagement = new UsersManagement(_this.db.collection(Constants.EAE_COLLECTION_USERS), _this.algoHelper,
-                                                new InterfaceUtils(), global.opal_interface_config.bcryptSaltRounds);
+                                                new InterfaceUtils(), global.opal_interface_config.bcryptSalt);
 
     _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
     _this.cacheHelper = new CacheHelper(global.opal_interface_config.cacheURL);
@@ -162,7 +162,7 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
                                                     _this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                     _this.accessLogger, _this.algoHelper, _this.cacheHelper);
     _this.usersController = new UsersControllerModule(_this.db.collection(Constants.EAE_COLLECTION_USERS),
-                                                      _this.accessLogger, _this.algoHelper, usersManagement);
+                                                      _this.accessLogger, usersManagement);
     _this.clusterController = new ClusterControllerModule(_this.db.collection(Constants.EAE_COLLECTION_STATUS),
                                                             usersManagement, _this.accessLogger);
     _this.auditController =  new AuditController(_this.accessLogger, global.opal_interface_config.auditDirectory,

@@ -7,5 +7,5 @@ module.exports = {
     algoServiceURL: 'http://algoservice:3001',
     algorithmsDirectory: '/usr/app/algorithms',
     auditDirectory: '/usr/app/audit',
-    bcryptSaltRounds:14
+    bcryptSalt:'$2b$14$2uYOq0IOSU5PViie2W8HU.'
 };

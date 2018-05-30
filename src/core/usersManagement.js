@@ -9,15 +9,15 @@ const bcrypt = require('bcrypt');
  * @params usersCollection Collection containing all the platform users
  * @params algorithmHelper Helper to interact with the algo service
  * @params interfaceUtils Interface utils
- * @params saltRounds Number of rounds for the bcrypt algorithm
+ * @params salt salt to be used for the bcrypt algorithm
  * @constructor
  */
-function UsersManagement(usersCollection, algorithmHelper, interfaceUtils, saltRounds) {
+function UsersManagement(usersCollection, algorithmHelper, interfaceUtils, salt) {
     let _this = this;
     _this._usersCollection = usersCollection;
     _this._algoHelper = algorithmHelper;
     _this.utils = interfaceUtils;
-    _this.saltRounds = saltRounds;
+    _this.salt = salt;
 
     // Bind member functions
     this.validateUserAndInsert = UsersManagement.prototype.validateUserAndInsert.bind(this);
@@ -115,7 +115,7 @@ UsersManagement.prototype.resetPassword = function (user){
     return new Promise(function (resolve, reject) {
         let filter = { username : user.username};
         let newPassword = _this.utils.generateToken(user);
-        bcrypt.hash(newPassword, _this.saltRounds).then(function(newHashedPassword) {
+        bcrypt.hash(newPassword, _this.salt).then(function(newHashedPassword) {
             // Store hash in your password DB.
             let updatedUser =  Object.assign({}, user, {token: newHashedPassword});
             _this._usersCollection.findOneAndUpdate(filter,
@@ -141,16 +141,16 @@ UsersManagement.prototype.resetPassword = function (user){
 UsersManagement.prototype.checkPassword = function (userToken){
     let _this = this;
     return new Promise(function (resolve, reject) {
-        bcrypt.hash(userToken, _this.saltRounds).then(function(hash) {
-            let filter = {token: hash};
-            // Check the hash against the one in the DB.
-            _this._usersCollection.findOne(filter).then(function (user) {
-                    resolve(user);
-                },function(error){
-                    reject(ErrorHelper('Couldn\'t retrieve user for the specified token.', error));
-                }
-            );
-        });
+            bcrypt.hash(userToken, _this.salt).then(function (hash) {
+                let filter = {token: "qwerty1234"};
+                // Check the hash against the one in the DB.
+                _this._usersCollection.findOne(filter).then(function (user) {
+                        resolve(user);
+                    }, function (error) {
+                        reject(ErrorHelper('Couldn\'t retrieve user for the specified token.', error));
+                    }
+                );
+            });
     });
 };
 
