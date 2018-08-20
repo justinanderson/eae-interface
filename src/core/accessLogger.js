@@ -11,11 +11,12 @@ const util = require('util');
  * @param auditDirectory
  * @constructor
  */
-function AccessLogger(accessLogCollection,illegalAccessCollection, auditDirectory) {
+function AccessLogger(accessLogCollection,illegalAccessCollection, auditDirectory, ethereumLogger) {
     let _this = this;
     _this._accessLogCollection = accessLogCollection;
     _this._illegalAccessLogCollection = illegalAccessCollection;
     _this._auditDirectory = auditDirectory;
+    _this._ethereumLogger = ethereumLogger;
 
     // Bind member functions
     this.logIllegalAccess = AccessLogger.prototype.logIllegalAccess.bind(this);
@@ -61,7 +62,11 @@ AccessLogger.prototype.logRequest = function(opalRequest){
         let date = new Date();
         let globalFileName = 'ALL_opal_audit.log';
         let monthlyFileName = date.getMonth() + 1 + '.' + date.getFullYear() + '_opal_audit.log';
-        let data = util.format('Requester:%s Parameters:%s \n',opalRequest.requester, JSON.stringify(opalRequest.params));
+        var data = util.format('Requester:%s Parameters:%s ', opalRequest.requester, JSON.stringify(opalRequest.params));
+
+        // append the hash of the log line to its end
+        let hash = _this._ethereumLogger.sha3(data);
+        data = util.format('%s Hash: %s \n', data, hash);
 
         fs.appendFile(_this._auditDirectory + '/' + globalFileName, data, 'utf8', (err) => {
             if (err) throw err;
@@ -70,6 +75,10 @@ AccessLogger.prototype.logRequest = function(opalRequest){
         fs.appendFile(_this._auditDirectory + '/' + monthlyFileName, data, 'utf8', (err) => {
             if (err) throw err;
         });
+
+        // write the request's hash to the Ethereum blockchain
+        _this._ethereumLogger.logHash(hash);
+
     }catch(error){
         // Fail safe - TODO send a mail to admin
     }

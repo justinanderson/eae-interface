@@ -7,5 +7,17 @@ module.exports = {
     algoServiceURL: 'http://algoservice:3001',
     algorithmsDirectory: '/usr/app/algorithms',
     auditDirectory: '/usr/app/audit',
-    bcryptSalt:'$2b$14$2uYOq0IOSU5PViie2W8HU.'
+    bcryptSalt:'$2b$14$2uYOq0IOSU5PViie2W8HU.',
+    ethereum: {
+        enabled: false,
+        url: '',
+        account: '',
+        password: '',
+        gasPrice: 0,
+        contract: {
+            "abi": [],
+            "address": ""
+        }
+    }
+
 };

@@ -10,6 +10,7 @@ const StatusController = require('./controllers/statusController.js');
 const JobsControllerModule = require('./controllers/jobsController.js');
 const UsersControllerModule = require('./controllers/usersController.js');
 const ClusterControllerModule = require('./controllers/clusterController.js');
+const EthereumLogger = require('./core/ethereumLogger.js');
 const AccessLogger = require('./core/accessLogger.js');
 const AlgoHelper = require('./core/algorithmsHelper.js');
 const CacheHelper = require('./core/cacheHelper.js');
@@ -154,9 +155,17 @@ OpalInterface.prototype._setupInterfaceControllers = function() {
 
     _this.algoHelper = new AlgoHelper(global.opal_interface_config.algoServiceURL, global.opal_interface_config.algorithmsDirectory);
     _this.cacheHelper = new CacheHelper(global.opal_interface_config.cacheURL);
+    _this.ethereumLogger = new EthereumLogger(global.opal_interface_config.ethereum.url,
+                                              global.opal_interface_config.ethereum.account,
+                                              global.opal_interface_config.ethereum.password,
+                                              global.opal_interface_config.ethereum.contract.abi,
+                                              global.opal_interface_config.ethereum.contract.address,
+                                              global.opal_interface_config.ethereum.gasPrice,
+                                              global.opal_interface_config.ethereum.enabled);
     _this.accessLogger = new AccessLogger(_this.db.collection(Constants.EAE_COLLECTION_ACCESS_LOG),
                                                 _this.db.collection(Constants_Opal.OPAL_ILLEGAL_ACCESS_COLLECTION),
-                                                global.opal_interface_config.auditDirectory);
+                                                global.opal_interface_config.auditDirectory,
+                                                _this.ethereumLogger);
     _this.jobsController = new JobsControllerModule(_this.db.collection(Constants.EAE_COLLECTION_JOBS),
                                                     usersManagement,
                                                     _this.db.collection(Constants.EAE_COLLECTION_STATUS),
